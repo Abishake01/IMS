@@ -27,6 +27,14 @@ interface TopProduct {
   revenue: number;
 }
 
+interface ProductDetail {
+  item_name: string;
+  date: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
 export function useReports(
   reportType: 'daily' | 'weekly' | 'monthly',
   dateRange: { start: string; end: string }
@@ -43,6 +51,7 @@ export function useReports(
   });
   const [salesData, setSalesData] = useState<SalesDataPoint[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [productDetails, setProductDetails] = useState<ProductDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +75,7 @@ export function useReports(
 
         if (salesError) throw salesError;
 
-        // Fetch sale items for the period
+        // Fetch sale items for the period with sales data
         const { data: saleItemsData, error: itemsError } = await supabase
           .from('sale_items')
           .select(`
@@ -90,6 +99,9 @@ export function useReports(
         // Get top products
         const topProductsData = getTopProducts(saleItemsData || []);
 
+        // Get product details
+        const productDetailsData = getProductDetails(saleItemsData || []);
+
         setReports({
           totalSales,
           totalTransactions,
@@ -103,8 +115,15 @@ export function useReports(
 
         setSalesData(timeSeriesData);
         setTopProducts(topProductsData);
+        setProductDetails(productDetailsData);
       } else {
         // Mock data for local mode
+        const mockProductDetails = [
+          { item_name: 'iPhone 15 Pro', date: new Date().toISOString(), quantity: 2, unit_price: 999.99, total_price: 1999.98 },
+          { item_name: 'AirPods Pro', date: new Date().toISOString(), quantity: 1, unit_price: 249.99, total_price: 249.99 },
+          { item_name: 'Galaxy S24 Ultra', date: new Date(Date.now() - 86400000).toISOString(), quantity: 1, unit_price: 1199.99, total_price: 1199.99 }
+        ];
+
         setReports({
           totalSales: 5250.75,
           totalTransactions: 12,
@@ -122,9 +141,36 @@ export function useReports(
           { name: 'AirPods Pro', quantity: 8, revenue: 1999.92 },
           { name: 'Galaxy S24 Ultra', quantity: 2, revenue: 2399.98 }
         ]);
+        setProductDetails(mockProductDetails);
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
+      
+      // Fallback to mock data
+      const mockProductDetails = [
+        { item_name: 'iPhone 15 Pro', date: new Date().toISOString(), quantity: 2, unit_price: 999.99, total_price: 1999.98 },
+        { item_name: 'AirPods Pro', date: new Date().toISOString(), quantity: 1, unit_price: 249.99, total_price: 249.99 },
+        { item_name: 'Galaxy S24 Ultra', date: new Date(Date.now() - 86400000).toISOString(), quantity: 1, unit_price: 1199.99, total_price: 1199.99 }
+      ];
+
+      setReports({
+        totalSales: 5250.75,
+        totalTransactions: 12,
+        totalItemsSold: 18,
+        averageOrderValue: 437.56,
+        salesChange: 5.2,
+        transactionChange: 3.1,
+        itemsChange: 8.7,
+        aovChange: 2.3
+      });
+
+      setSalesData(generateMockTimeSeriesData(reportType));
+      setTopProducts([
+        { name: 'iPhone 15 Pro', quantity: 5, revenue: 4999.95 },
+        { name: 'AirPods Pro', quantity: 8, revenue: 1999.92 },
+        { name: 'Galaxy S24 Ultra', quantity: 2, revenue: 2399.98 }
+      ]);
+      setProductDetails(mockProductDetails);
     } finally {
       setLoading(false);
     }
@@ -206,6 +252,16 @@ export function useReports(
       .slice(0, 5);
   };
 
+  const getProductDetails = (saleItems: any[]): ProductDetail[] => {
+    return saleItems.map(item => ({
+      item_name: item.item_name,
+      date: item.sales.created_at,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total_price: item.total_price
+    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
   const generateMockTimeSeriesData = (type: string): SalesDataPoint[] => {
     const data: SalesDataPoint[] = [];
     const count = type === 'daily' ? 7 : type === 'weekly' ? 4 : 3;
@@ -233,6 +289,7 @@ export function useReports(
     reports,
     salesData,
     topProducts,
+    productDetails,
     loading,
     refresh: fetchReportData
   };

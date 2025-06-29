@@ -13,20 +13,35 @@ interface InventoryModalProps {
 const categories = ['phones', 'accessories', 'cases', 'chargers', 'tablets', 'smart_watches'];
 const statuses = ['active', 'discontinued', 'out_of_stock'];
 
+const phoneColors = [
+  'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Blue', 'Green', 
+  'Purple', 'Red', 'Yellow', 'Pink', 'Coral', 'Midnight', 'Starlight', 'Deep Purple'
+];
+
+const storageOptions = [
+  '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
+  '4GB+64GB', '6GB+128GB', '8GB+128GB', '8GB+256GB', '12GB+256GB', '12GB+512GB'
+];
+
 export function InventoryModal({ isOpen, onClose, onSave, item, title }: InventoryModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
     category: 'phones',
     sku: '',
-    price: 0,
-    cost_price: 0,
-    stock_quantity: 0,
-    min_stock_level: 5,
+    price: '',
+    cost_price: '',
+    stock_quantity: '',
+    min_stock_level: '',
     description: '',
     specifications: {},
     image_url: '',
     status: 'active' as const
+  });
+  const [phoneSpecs, setPhoneSpecs] = useState({
+    storage: '',
+    color: '',
+    imei: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -37,29 +52,42 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
         brand: item.brand,
         category: item.category,
         sku: item.sku,
-        price: item.price,
-        cost_price: item.cost_price,
-        stock_quantity: item.stock_quantity,
-        min_stock_level: item.min_stock_level,
+        price: item.price.toString(),
+        cost_price: item.cost_price.toString(),
+        stock_quantity: item.stock_quantity.toString(),
+        min_stock_level: item.min_stock_level.toString(),
         description: item.description,
         specifications: item.specifications,
         image_url: item.image_url,
         status: item.status
       });
+      
+      if (item.category === 'phones' && item.specifications) {
+        setPhoneSpecs({
+          storage: item.specifications.storage || '',
+          color: item.specifications.color || '',
+          imei: item.sku || ''
+        });
+      }
     } else {
       setFormData({
         name: '',
         brand: '',
         category: 'phones',
         sku: '',
-        price: 0,
-        cost_price: 0,
-        stock_quantity: 0,
-        min_stock_level: 5,
+        price: '',
+        cost_price: '',
+        stock_quantity: '',
+        min_stock_level: '',
         description: '',
         specifications: {},
         image_url: '',
         status: 'active'
+      });
+      setPhoneSpecs({
+        storage: '',
+        color: '',
+        imei: ''
       });
     }
   }, [item]);
@@ -69,7 +97,29 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     setLoading(true);
     
     try {
-      await onSave(formData);
+      let specifications = formData.specifications;
+      let sku = formData.sku;
+      
+      if (formData.category === 'phones') {
+        specifications = {
+          ...specifications,
+          storage: phoneSpecs.storage,
+          color: phoneSpecs.color
+        };
+        sku = phoneSpecs.imei;
+      }
+      
+      const itemData = {
+        ...formData,
+        sku,
+        price: parseFloat(formData.price) || 0,
+        cost_price: parseFloat(formData.cost_price) || 0,
+        stock_quantity: parseInt(formData.stock_quantity) || 0,
+        min_stock_level: parseInt(formData.min_stock_level) || 0,
+        specifications
+      };
+      
+      await onSave(itemData);
       onClose();
     } catch (error) {
       console.error('Failed to save item:', error);
@@ -82,9 +132,23 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'cost_price' ? parseFloat(value) || 0 :
-              name === 'stock_quantity' || name === 'min_stock_level' ? parseInt(value) || 0 :
-              value
+      [name]: value
+    }));
+  };
+
+  const handlePhoneSpecChange = (field: string, value: string) => {
+    setPhoneSpecs(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNumberInput = (field: string, value: string) => {
+    // Remove leading zeros and ensure valid number format
+    const cleanValue = value.replace(/^0+/, '') || '';
+    setFormData(prev => ({
+      ...prev,
+      [field]: cleanValue
     }));
   };
 
@@ -154,30 +218,45 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               </select>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                SKU *
-              </label>
-              <input
-                type="text"
-                name="sku"
-                value={formData.sku}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="APL-IP15P-128"
-              />
-            </div>
+            {formData.category === 'phones' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  IMEI *
+                </label>
+                <input
+                  type="text"
+                  value={phoneSpecs.imei}
+                  onChange={(e) => handlePhoneSpecChange('imei', e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="123456789012345"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  SKU *
+                </label>
+                <input
+                  type="text"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="APL-IP15P-128"
+                />
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price *
+                Price (₹) *
               </label>
               <input
                 type="number"
-                name="price"
                 value={formData.price}
-                onChange={handleChange}
+                onChange={(e) => handleNumberInput('price', e.target.value)}
                 required
                 step="0.01"
                 min="0"
@@ -188,13 +267,12 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price *
+                Cost Price (₹) *
               </label>
               <input
                 type="number"
-                name="cost_price"
                 value={formData.cost_price}
-                onChange={handleChange}
+                onChange={(e) => handleNumberInput('cost_price', e.target.value)}
                 required
                 step="0.01"
                 min="0"
@@ -209,9 +287,8 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               </label>
               <input
                 type="number"
-                name="stock_quantity"
                 value={formData.stock_quantity}
-                onChange={handleChange}
+                onChange={(e) => handleNumberInput('stock_quantity', e.target.value)}
                 required
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -225,9 +302,8 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               </label>
               <input
                 type="number"
-                name="min_stock_level"
                 value={formData.min_stock_level}
-                onChange={handleChange}
+                onChange={(e) => handleNumberInput('min_stock_level', e.target.value)}
                 required
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -267,6 +343,48 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               />
             </div>
           </div>
+
+          {/* Phone-specific fields */}
+          {formData.category === 'phones' && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Storage *
+                  </label>
+                  <select
+                    value={phoneSpecs.storage}
+                    onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Storage</option>
+                    {storageOptions.map(storage => (
+                      <option key={storage} value={storage}>{storage}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Color *
+                  </label>
+                  <select
+                    value={phoneSpecs.color}
+                    onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Color</option>
+                    {phoneColors.map(color => (
+                      <option key={color} value={color}>{color}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

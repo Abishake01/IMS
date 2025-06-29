@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, TrendingUp, Download, Filter, Menu } from 'lucide-react';
+import { Calendar, TrendingUp, Download, Filter, Menu, Package } from 'lucide-react';
 import { useReports } from '../hooks/useReports';
 import { SalesChart } from '../components/SalesChart';
 import { TopProductsChart } from '../components/TopProductsChart';
 import { ReportCard } from '../components/ReportCard';
-import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 interface ReportsProps {
   onMenuClick: () => void;
@@ -12,6 +12,7 @@ interface ReportsProps {
 
 export function Reports({ onMenuClick }: ReportsProps) {
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products'>('overview');
   const [dateRange, setDateRange] = useState(() => {
     const today = new Date();
     return {
@@ -20,7 +21,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
     };
   });
 
-  const { reports, salesData, topProducts, loading } = useReports(reportType, dateRange);
+  const { reports, salesData, topProducts, productDetails, loading } = useReports(reportType, dateRange);
 
   const handleReportTypeChange = (type: 'daily' | 'weekly' | 'monthly') => {
     setReportType(type);
@@ -48,7 +49,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
     }
   };
 
-  const exportReport = () => {
+  const exportOverviewReport = () => {
     const csvContent = [
       ['Period', 'Sales', 'Transactions', 'Items Sold', 'Avg Order Value'],
       ...salesData.map(item => [
@@ -64,7 +65,30 @@ export function Reports({ onMenuClick }: ReportsProps) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sales-report-${reportType}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `sales-overview-${reportType}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportProductReport = () => {
+    const csvContent = [
+      ['Item Name', 'Date', 'Quantity', 'Unit Price', 'Total Price'],
+      ...productDetails.map(item => [
+        item.item_name,
+        format(new Date(item.date), 'yyyy-MM-dd'),
+        item.quantity,
+        `₹${item.unit_price.toFixed(2)}`,
+        `₹${item.total_price.toFixed(2)}`
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `product-details-${reportType}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -97,18 +121,18 @@ export function Reports({ onMenuClick }: ReportsProps) {
             <Menu className="w-6 h-6" />
           </button>
           <button 
-            onClick={exportReport}
+            onClick={activeTab === 'overview' ? exportOverviewReport : exportProductReport}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Download className="w-4 h-4" />
-            Export Report
+            Export {activeTab === 'overview' ? 'Overview' : 'Products'}
           </button>
         </div>
       </div>
 
       {/* Report Controls */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex gap-2">
             {(['daily', 'weekly', 'monthly'] as const).map((type) => (
               <button
@@ -146,91 +170,188 @@ export function Reports({ onMenuClick }: ReportsProps) {
         </div>
       </div>
 
-      {/* Report Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <ReportCard
-          title="Total Sales"
-          value={`₹${reports.totalSales.toLocaleString()}`}
-          change={reports.salesChange}
-          icon={TrendingUp}
-        />
-        <ReportCard
-          title="Total Transactions"
-          value={reports.totalTransactions.toString()}
-          change={reports.transactionChange}
-          icon={Calendar}
-        />
-        <ReportCard
-          title="Average Order Value"
-          value={`₹${reports.averageOrderValue.toFixed(2)}`}
-          change={reports.aovChange}
-          icon={TrendingUp}
-        />
-        <ReportCard
-          title="Items Sold"
-          value={reports.totalItemsSold.toString()}
-          change={reports.itemsChange}
-          icon={TrendingUp}
-        />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <SalesChart data={salesData} title={`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Sales Trend`} />
-        <TopProductsChart data={topProducts} />
-      </div>
-
-      {/* Detailed Report Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Detailed {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</h3>
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-lg shadow-sm mb-8">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'products'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Product Details
+            </button>
+          </nav>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Period
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Transactions
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Items Sold
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avg Order Value
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {salesData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{item.sales?.toLocaleString() || '0'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.transactions || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.items || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{item.avgOrderValue?.toFixed(2) || '0.00'}
-                  </td>
+      </div>
+
+      {activeTab === 'overview' ? (
+        <>
+          {/* Report Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <ReportCard
+              title="Total Sales"
+              value={`₹${reports.totalSales.toLocaleString()}`}
+              change={reports.salesChange}
+              icon={TrendingUp}
+            />
+            <ReportCard
+              title="Total Transactions"
+              value={reports.totalTransactions.toString()}
+              change={reports.transactionChange}
+              icon={Calendar}
+            />
+            <ReportCard
+              title="Average Order Value"
+              value={`₹${reports.averageOrderValue.toFixed(2)}`}
+              change={reports.aovChange}
+              icon={TrendingUp}
+            />
+            <ReportCard
+              title="Items Sold"
+              value={reports.totalItemsSold.toString()}
+              change={reports.itemsChange}
+              icon={TrendingUp}
+            />
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <SalesChart data={salesData} title={`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Sales Trend`} />
+            <TopProductsChart data={topProducts} />
+          </div>
+
+          {/* Detailed Report Table */}
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Detailed {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</h3>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Period
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sales
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Transactions
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Items Sold
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Avg Order Value
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {salesData.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{item.sales?.toLocaleString() || '0'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.transactions || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.items || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{item.avgOrderValue?.toFixed(2) || '0.00'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Product Details Tab */
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900">Product Sales Details</h3>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Item Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Unit Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Price
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {productDetails.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {item.item_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {format(new Date(item.date), 'MMM dd, yyyy')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.quantity}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₹{item.unit_price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ₹{item.total_price.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {productDetails.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No product sales found</h3>
+              <p className="text-gray-500">
+                No products were sold in the selected date range.
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
