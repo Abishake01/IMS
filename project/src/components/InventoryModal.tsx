@@ -13,11 +13,6 @@ interface InventoryModalProps {
 const categories = ['phones', 'accessories', 'cases', 'chargers', 'tablets', 'smart_watches'];
 const statuses = ['active', 'discontinued', 'out_of_stock'];
 
-const phoneColors = [
-  'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Blue', 'Green', 
-  'Purple', 'Red', 'Yellow', 'Pink', 'Coral', 'Midnight', 'Starlight', 'Deep Purple'
-];
-
 const storageOptions = [
   '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
   '4GB+64GB', '6GB+128GB', '8GB+128GB', '8GB+256GB', '12GB+256GB', '12GB+512GB'
@@ -251,7 +246,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (₹) *
+                Selling Price (₹) *
               </label>
               <input
                 type="number"
@@ -267,7 +262,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price (₹) *
+                Original Price (₹) *
               </label>
               <input
                 type="number"
@@ -345,46 +340,43 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
           </div>
 
           {/* Phone-specific fields */}
-          {formData.category === 'phones' && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Storage *
-                  </label>
-                  <select
-                    value={phoneSpecs.storage}
-                    onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Storage</option>
-                    {storageOptions.map(storage => (
-                      <option key={storage} value={storage}>{storage}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Color *
-                  </label>
-                  <select
-                    value={phoneSpecs.color}
-                    onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Color</option>
-                    {phoneColors.map(color => (
-                      <option key={color} value={color}>{color}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
+{formData.category === 'phones' && (
+  <div className="border-t pt-6">
+    <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Storage *
+        </label>
+        <select
+          value={phoneSpecs.storage}
+          onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="">Select Storage</option>
+          {storageOptions.map(storage => (
+            <option key={storage} value={storage}>{storage}</option>
+          ))}
+        </select>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Color *
+        </label>
+        <input
+          type="text"
+          value={phoneSpecs.color}
+          onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Enter color"
+        />
+      </div>
+    </div>
+  </div>
+)}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
