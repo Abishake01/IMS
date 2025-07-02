@@ -66,6 +66,18 @@ export interface SaleItem {
   created_at: string;
 }
 
+export interface Service {
+  id: string;
+  model_name: string;
+  problem: string;
+  customer_name: string;
+  phone_number: string;
+  amount: number;
+  comments: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StockMovement {
   id: string;
   inventory_item_id: string;

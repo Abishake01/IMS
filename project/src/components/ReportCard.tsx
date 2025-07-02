@@ -5,7 +5,7 @@ interface ReportCardProps {
   title: string;
   value: string;
   change: number;
-  icon: LucideIcon;
+  icon: typeof LucideIcon;
 }
 
 export function ReportCard({ title, value, change, icon: Icon }: ReportCardProps) {

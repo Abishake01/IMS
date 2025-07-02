@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, TrendingUp, Download, Filter, Menu, Package } from 'lucide-react';
+import { Calendar, TrendingUp, Download, Filter, Menu, Package, Wrench } from 'lucide-react';
 import { useReports } from '../hooks/useReports';
 import { SalesChart } from '../components/SalesChart';
 import { TopProductsChart } from '../components/TopProductsChart';
@@ -12,7 +12,7 @@ interface ReportsProps {
 
 export function Reports({ onMenuClick }: ReportsProps) {
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [activeTab, setActiveTab] = useState<'overview' | 'products'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'services'>('overview');
   const [dateRange, setDateRange] = useState(() => {
     const today = new Date();
     return {
@@ -21,7 +21,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
     };
   });
 
-  const { reports, salesData, topProducts, productDetails, loading } = useReports(reportType, dateRange);
+  const { reports, salesData, topProducts, productDetails, serviceDetails, loading } = useReports(reportType, dateRange);
 
   const handleReportTypeChange = (type: 'daily' | 'weekly' | 'monthly') => {
     setReportType(type);
@@ -95,6 +95,45 @@ export function Reports({ onMenuClick }: ReportsProps) {
     window.URL.revokeObjectURL(url);
   };
 
+  const exportServiceReport = () => {
+    const csvContent = [
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Amount', 'Comments', 'Date'],
+      ...serviceDetails.map((item, index) => [
+        index + 1,
+        item.model_name,
+        item.problem,
+        item.customer_name,
+        item.phone_number,
+        `₹${item.amount.toFixed(2)}`,
+        item.comments,
+        format(new Date(item.created_at), 'yyyy-MM-dd')
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `service-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const getExportFunction = () => {
+    switch (activeTab) {
+      case 'overview':
+        return exportOverviewReport;
+      case 'products':
+        return exportProductReport;
+      case 'services':
+        return exportServiceReport;
+      default:
+        return exportOverviewReport;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -110,8 +149,8 @@ export function Reports({ onMenuClick }: ReportsProps) {
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales Reports</h1>
-          <p className="text-gray-600">Analyze your sales performance and trends</p>
+          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+          <p className="text-gray-600">Analyze your sales performance and service records</p>
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -121,11 +160,11 @@ export function Reports({ onMenuClick }: ReportsProps) {
             <Menu className="w-6 h-6" />
           </button>
           <button 
-            onClick={activeTab === 'overview' ? exportOverviewReport : exportProductReport}
+            onClick={getExportFunction()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Download className="w-4 h-4" />
-            Export {activeTab === 'overview' ? 'Overview' : 'Products'}
+            Export {activeTab === 'overview' ? 'Overview' : activeTab === 'products' ? 'Products' : 'Services'}
           </button>
         </div>
       </div>
@@ -193,6 +232,16 @@ export function Reports({ onMenuClick }: ReportsProps) {
               }`}
             >
               Product Details
+            </button>
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'services'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Service Reports
             </button>
           </nav>
         </div>
@@ -286,7 +335,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
             </div>
           </div>
         </>
-      ) : (
+      ) : activeTab === 'products' ? (
         /* Product Details Tab */
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
@@ -347,6 +396,89 @@ export function Reports({ onMenuClick }: ReportsProps) {
               <h3 className="text-lg font-medium text-gray-900 mb-2">No product sales found</h3>
               <p className="text-gray-500">
                 No products were sold in the selected date range.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Service Reports Tab */
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900">Service Reports</h3>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    S.No
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Mobile Model
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Problem
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone Number
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Comments
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {serviceDetails.map((item, index) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {item.model_name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                      {item.problem}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.customer_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.phone_number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ₹{item.amount.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                      {item.comments || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {format(new Date(item.created_at), 'MMM dd, yyyy')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {serviceDetails.length === 0 && (
+            <div className="text-center py-12">
+              <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No service records found</h3>
+              <p className="text-gray-500">
+                No service requests were created in the selected date range.
               </p>
             </div>
           )}

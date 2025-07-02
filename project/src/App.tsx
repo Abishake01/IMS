@@ -8,6 +8,7 @@ import { Inventory } from './pages/Inventory';
 import { Billing } from './pages/Billing';
 import { Reports } from './pages/Reports';
 import { Sales } from './pages/Sales';
+import { Service } from './pages/Service';
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,10 +43,12 @@ function AppContent() {
                 <Route path="/sales" element={<Sales onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/reports" element={<Reports onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/billing" element={<Navigate to="/" replace />} />
+                <Route path="/service" element={<Navigate to="/" replace />} />
               </>
             ) : (
               <>
                 <Route path="/billing" element={<Billing onMenuClick={() => setSidebarOpen(true)} />} />
+                <Route path="/service" element={<Service onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="*" element={<Navigate to="/billing" replace />} />
               </>
             )}

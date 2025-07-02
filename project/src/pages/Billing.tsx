@@ -264,10 +264,11 @@ export function Billing({ onMenuClick }: BillingProps) {
                   <input
                     type="number"
                     min="0"
-                    max="100"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setDiscount(parseFloat(e.target.value))}
                     className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
+                    step="0.01"
+                    placeholder="0" 
                   />
                 </div>
                 

@@ -35,6 +35,17 @@ interface ProductDetail {
   total_price: number;
 }
 
+interface ServiceDetail {
+  id: string;
+  model_name: string;
+  problem: string;
+  customer_name: string;
+  phone_number: string;
+  amount: number;
+  comments: string;
+  created_at: string;
+}
+
 export function useReports(
   reportType: 'daily' | 'weekly' | 'monthly',
   dateRange: { start: string; end: string }
@@ -52,6 +63,7 @@ export function useReports(
   const [salesData, setSalesData] = useState<SalesDataPoint[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [productDetails, setProductDetails] = useState<ProductDetail[]>([]);
+  const [serviceDetails, setServiceDetails] = useState<ServiceDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,6 +99,16 @@ export function useReports(
 
         if (itemsError) throw itemsError;
 
+        // Fetch service data for the period
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
+          .order('created_at', { ascending: false });
+
+        if (servicesError) throw servicesError;
+
         // Calculate totals
         const totalSales = salesData?.reduce((sum, sale) => sum + sale.final_amount, 0) || 0;
         const totalTransactions = salesData?.length || 0;
@@ -116,12 +138,36 @@ export function useReports(
         setSalesData(timeSeriesData);
         setTopProducts(topProductsData);
         setProductDetails(productDetailsData);
+        setServiceDetails(servicesData || []);
       } else {
         // Mock data for local mode
         const mockProductDetails = [
           { item_name: 'iPhone 15 Pro', date: new Date().toISOString(), quantity: 2, unit_price: 999.99, total_price: 1999.98 },
           { item_name: 'AirPods Pro', date: new Date().toISOString(), quantity: 1, unit_price: 249.99, total_price: 249.99 },
           { item_name: 'Galaxy S24 Ultra', date: new Date(Date.now() - 86400000).toISOString(), quantity: 1, unit_price: 1199.99, total_price: 1199.99 }
+        ];
+
+        const mockServiceDetails = [
+          {
+            id: '1',
+            model_name: 'iPhone 15 Pro',
+            problem: 'Screen cracked',
+            customer_name: 'John Doe',
+            phone_number: '+91 9876543210',
+            amount: 5000,
+            comments: 'Customer dropped the phone',
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            model_name: 'Galaxy S24',
+            problem: 'Battery issue',
+            customer_name: 'Jane Smith',
+            phone_number: '+91 9876543211',
+            amount: 3000,
+            comments: 'Battery drains quickly',
+            created_at: new Date(Date.now() - 86400000).toISOString()
+          }
         ];
 
         setReports({
@@ -142,6 +188,7 @@ export function useReports(
           { name: 'Galaxy S24 Ultra', quantity: 2, revenue: 2399.98 }
         ]);
         setProductDetails(mockProductDetails);
+        setServiceDetails(mockServiceDetails);
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -151,6 +198,19 @@ export function useReports(
         { item_name: 'iPhone 15 Pro', date: new Date().toISOString(), quantity: 2, unit_price: 999.99, total_price: 1999.98 },
         { item_name: 'AirPods Pro', date: new Date().toISOString(), quantity: 1, unit_price: 249.99, total_price: 249.99 },
         { item_name: 'Galaxy S24 Ultra', date: new Date(Date.now() - 86400000).toISOString(), quantity: 1, unit_price: 1199.99, total_price: 1199.99 }
+      ];
+
+      const mockServiceDetails = [
+        {
+          id: '1',
+          model_name: 'iPhone 15 Pro',
+          problem: 'Screen cracked',
+          customer_name: 'John Doe',
+          phone_number: '+91 9876543210',
+          amount: 5000,
+          comments: 'Customer dropped the phone',
+          created_at: new Date().toISOString()
+        }
       ];
 
       setReports({
@@ -171,6 +231,7 @@ export function useReports(
         { name: 'Galaxy S24 Ultra', quantity: 2, revenue: 2399.98 }
       ]);
       setProductDetails(mockProductDetails);
+      setServiceDetails(mockServiceDetails);
     } finally {
       setLoading(false);
     }
@@ -290,6 +351,7 @@ export function useReports(
     salesData,
     topProducts,
     productDetails,
+    serviceDetails,
     loading,
     refresh: fetchReportData
   };

@@ -8,7 +8,8 @@ import {
   ShoppingCart,
   Smartphone,
   X,
-  LogOut
+  LogOut,
+  Wrench
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,6 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const userNavigation = [
     { name: 'Billing', href: '/billing', icon: Receipt },
+    { name: 'Service', href: '/service', icon: Wrench },
   ];
 
   const navigation = user?.role === 'admin' ? adminNavigation : userNavigation;
@@ -63,7 +65,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div>
               <h1 className="text-lg font-bold text-gray-900">Mobile Shop</h1>
               <p className="text-xs text-gray-500">
-                {user?.role === 'admin' ? 'Admin Panel' : 'Billing System'}
+                {user?.role === 'admin' ? 'Admin Panel' : 'User Panel'}
               </p>
             </div>
           </div>
