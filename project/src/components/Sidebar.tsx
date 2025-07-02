@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -9,7 +8,8 @@ import {
   Smartphone,
   X,
   LogOut,
-  Wrench
+  Wrench,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,11 +27,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Inventory', href: '/inventory', icon: Package },
     { name: 'Sales', href: '/sales', icon: ShoppingCart },
     { name: 'Reports', href: '/reports', icon: BarChart3 },
+    { name: 'Admin Service', href: '/admin-service', icon: Wrench },
   ];
 
   const userNavigation = [
     { name: 'Billing', href: '/billing', icon: Receipt },
     { name: 'Service', href: '/service', icon: Wrench },
+    { name: 'Service Report', href: '/service-report', icon: FileText },
   ];
 
   const navigation = user?.role === 'admin' ? adminNavigation : userNavigation;

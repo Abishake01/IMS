@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Eye, Calendar, Filter, Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Eye, Calendar, Menu } from 'lucide-react';
 import { useSales } from '../hooks/useSales';
 import { SaleDetailsModal } from '../components/SaleDetailsModal';
 import { format } from 'date-fns';

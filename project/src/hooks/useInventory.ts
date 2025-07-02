@@ -102,24 +102,31 @@ export function useInventory() {
 
   const deleteItem = async (id: string) => {
     try {
+      // Optimistically update UI first
+      setItems(prev => prev.filter(item => item.id !== id));
+
       if (isSupabaseConnected && supabase) {
         const { error } = await supabase
           .from('inventory_items')
           .delete()
           .eq('id', id);
 
-        if (error) throw error;
-        setItems(prev => prev.filter(item => item.id !== id));
+        if (error) {
+          // If deletion fails, revert the optimistic update
+          console.error('Failed to delete from Supabase:', error);
+          await fetchItems(); // Refresh to get current state
+          throw error;
+        }
         return { success: true };
       } else {
-        // Local storage fallback
-        setItems(prev => prev.filter(item => item.id !== id));
+        // Local storage - already updated optimistically
         return { success: true };
       }
     } catch (err) {
-      // Fallback to local deletion
-      setItems(prev => prev.filter(item => item.id !== id));
-      return { success: true };
+      console.error('Error deleting item:', err);
+      // UI is already updated optimistically, so we don't need to revert here
+      // The fetchItems call above will handle reverting if needed
+      return { success: false, error: err };
     }
   };
 

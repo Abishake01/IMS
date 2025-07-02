@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Calendar, User, Phone, CreditCard, Package } from 'lucide-react';
 import { format } from 'date-fns';
 

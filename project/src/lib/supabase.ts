@@ -73,6 +73,7 @@ export interface Service {
   customer_name: string;
   phone_number: string;
   amount: number;
+  material_cost?: number;
   comments: string;
   created_at: string;
   updated_at: string;

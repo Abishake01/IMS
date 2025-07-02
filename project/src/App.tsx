@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
@@ -9,6 +9,8 @@ import { Billing } from './pages/Billing';
 import { Reports } from './pages/Reports';
 import { Sales } from './pages/Sales';
 import { Service } from './pages/Service';
+import { ServiceReport } from './pages/ServiceReport';
+import { AdminService } from './pages/AdminService';
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,13 +44,16 @@ function AppContent() {
                 <Route path="/inventory" element={<Inventory onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/sales" element={<Sales onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/reports" element={<Reports onMenuClick={() => setSidebarOpen(true)} />} />
+                <Route path="/admin-service" element={<AdminService onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/billing" element={<Navigate to="/" replace />} />
                 <Route path="/service" element={<Navigate to="/" replace />} />
+                <Route path="/service-report" element={<Navigate to="/" replace />} />
               </>
             ) : (
               <>
                 <Route path="/billing" element={<Billing onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="/service" element={<Service onMenuClick={() => setSidebarOpen(true)} />} />
+                <Route path="/service-report" element={<ServiceReport onMenuClick={() => setSidebarOpen(true)} />} />
                 <Route path="*" element={<Navigate to="/billing" replace />} />
               </>
             )}

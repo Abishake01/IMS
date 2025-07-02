@@ -1,5 +1,5 @@
-import React from 'react';
-import { Menu, TrendingUp, Package, DollarSign, Users, AlertTriangle, ShoppingCart } from 'lucide-react';
+
+import { Menu, Package, DollarSign, Users, AlertTriangle} from 'lucide-react';
 import { StatsCard } from '../components/StatsCard';
 import { RecentSales } from '../components/RecentSales';
 import { LowStockAlert } from '../components/LowStockAlert';

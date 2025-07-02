@@ -69,7 +69,7 @@ export function useDashboard() {
         const { data: lowStockData } = await supabase
           .from('inventory_items')
           .select('id, name, stock_quantity, min_stock_level')
-          .filter('stock_quantity', 'lte', 'min_stock_level');
+          .lte('stock_quantity', 'min_stock_level');
 
         console.log('Low stock query result:', lowStockData);
 

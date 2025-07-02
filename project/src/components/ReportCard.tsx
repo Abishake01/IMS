@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { DivideIcon as LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface ReportCardProps {

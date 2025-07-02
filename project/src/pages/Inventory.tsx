@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Search, Package, Menu } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { InventoryCard } from '../components/InventoryCard';

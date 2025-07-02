@@ -1,4 +1,3 @@
-import React from 'react';
 import { Edit2, Trash2, Package, AlertTriangle } from 'lucide-react';
 import { InventoryItem } from '../lib/supabase';
 

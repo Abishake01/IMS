@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConnected } from '../lib/supabase';
-import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 interface ReportData {
   totalSales: number;
@@ -42,6 +42,7 @@ interface ServiceDetail {
   customer_name: string;
   phone_number: string;
   amount: number;
+  material_cost?: number;
   comments: string;
   created_at: string;
 }
@@ -99,15 +100,26 @@ export function useReports(
 
         if (itemsError) throw itemsError;
 
-        // Fetch service data for the period
-        const { data: servicesData, error: servicesError } = await supabase
+        // Fetch service data for the period (both admin_services and services)
+        const { data: adminServicesData } = await supabase
+          .from('admin_services')
+          .select('*')
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
+          .order('created_at', { ascending: false });
+
+        const { data: userServicesData } = await supabase
           .from('services')
           .select('*')
           .gte('created_at', startDate.toISOString())
           .lte('created_at', endDate.toISOString())
           .order('created_at', { ascending: false });
 
-        if (servicesError) throw servicesError;
+        // Combine admin and user services
+        const allServices = [
+          ...(adminServicesData || []),
+          ...(userServicesData || [])
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
         // Calculate totals
         const totalSales = salesData?.reduce((sum, sale) => sum + sale.final_amount, 0) || 0;
@@ -138,7 +150,7 @@ export function useReports(
         setSalesData(timeSeriesData);
         setTopProducts(topProductsData);
         setProductDetails(productDetailsData);
-        setServiceDetails(servicesData || []);
+        setServiceDetails(allServices);
       } else {
         // Mock data for local mode
         const mockProductDetails = [
@@ -155,6 +167,7 @@ export function useReports(
             customer_name: 'John Doe',
             phone_number: '+91 9876543210',
             amount: 5000,
+            material_cost: 3000,
             comments: 'Customer dropped the phone',
             created_at: new Date().toISOString()
           },
@@ -165,6 +178,7 @@ export function useReports(
             customer_name: 'Jane Smith',
             phone_number: '+91 9876543211',
             amount: 3000,
+            material_cost: 1500,
             comments: 'Battery drains quickly',
             created_at: new Date(Date.now() - 86400000).toISOString()
           }
@@ -208,6 +222,7 @@ export function useReports(
           customer_name: 'John Doe',
           phone_number: '+91 9876543210',
           amount: 5000,
+          material_cost: 3000,
           comments: 'Customer dropped the phone',
           created_at: new Date().toISOString()
         }

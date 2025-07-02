@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Clock, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
