@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, isSupabaseConnected } from '../lib/supabase';
+import { supabase, isSupabaseConnected, getWarrantyStatus } from '../lib/supabase';
 
 interface Sale {
   id: string;
@@ -21,6 +21,11 @@ interface SaleItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  inventory_item?: {
+    has_warranty: boolean;
+    warranty_duration: number;
+    warranty_unit: string;
+  };
 }
 
 export function useSales() {
@@ -46,13 +51,35 @@ export function useSales() {
               item_sku,
               quantity,
               unit_price,
-              total_price
+              total_price,
+              inventory_items:inventory_item_id (
+                has_warranty,
+                warranty_duration,
+                warranty_unit
+              )
             )
           `)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setSales(data || []);
+        
+        // Process the data to include warranty information
+        const processedSales = data?.map(sale => ({
+          ...sale,
+          sale_items: sale.sale_items?.map((item: any) => ({
+            ...item,
+            inventory_item: item.inventory_items,
+            warranty_status: item.inventory_items ? 
+              getWarrantyStatus(
+                sale.created_at,
+                item.inventory_items.has_warranty,
+                item.inventory_items.warranty_duration,
+                item.inventory_items.warranty_unit
+              ) : 'No Warranty'
+          }))
+        })) || [];
+
+        setSales(processedSales);
       } else {
         // Mock data for local mode
         setSales([
@@ -73,7 +100,12 @@ export function useSales() {
                 item_sku: 'APL-IP15P-128',
                 quantity: 1,
                 unit_price: 999.99,
-                total_price: 999.99
+                total_price: 999.99,
+                inventory_item: {
+                  has_warranty: true,
+                  warranty_duration: 12,
+                  warranty_unit: 'months'
+                }
               }
             ]
           },
@@ -94,7 +126,12 @@ export function useSales() {
                 item_sku: 'APL-APP-GEN2',
                 quantity: 1,
                 unit_price: 249.99,
-                total_price: 249.99
+                total_price: 249.99,
+                inventory_item: {
+                  has_warranty: true,
+                  warranty_duration: 6,
+                  warranty_unit: 'months'
+                }
               }
             ]
           }

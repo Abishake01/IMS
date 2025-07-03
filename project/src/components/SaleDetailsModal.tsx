@@ -1,5 +1,7 @@
-import { X, Calendar, User, Phone, CreditCard, Package } from 'lucide-react';
+
+import { X, Calendar, User, Phone, CreditCard, Package, Shield } from 'lucide-react';
 import { format } from 'date-fns';
+import { getWarrantyStatus } from '../lib/supabase';
 
 interface SaleItem {
   id: string;
@@ -8,6 +10,11 @@ interface SaleItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  inventory_item?: {
+    has_warranty: boolean;
+    warranty_duration: number;
+    warranty_unit: string;
+  };
 }
 
 interface Sale {
@@ -34,7 +41,7 @@ export function SaleDetailsModal({ sale, isOpen, onClose }: SaleDetailsModalProp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Sale Details</h2>
           <button
@@ -119,18 +126,41 @@ export function SaleDetailsModal({ sale, isOpen, onClose }: SaleDetailsModalProp
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Warranty</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sale.sale_items?.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.item_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{item.item_sku}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">₹{item.unit_price.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">₹{item.total_price.toFixed(2)}</td>
-                    </tr>
-                  ))}
+                  {sale.sale_items?.map((item) => {
+                    const warrantyStatus = item.inventory_item ? 
+                      getWarrantyStatus(
+                        sale.created_at,
+                        item.inventory_item.has_warranty,
+                        item.inventory_item.warranty_duration,
+                        item.inventory_item.warranty_unit
+                      ) : 'No Warranty';
+
+                    return (
+                      <tr key={item.id}>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.item_name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{item.item_sku}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">₹{item.unit_price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">₹{item.total_price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Shield className="w-4 h-4 text-gray-400" />
+                            <span className={`text-xs font-medium ${
+                              warrantyStatus === 'No Warranty' ? 'text-gray-500' :
+                              warrantyStatus === 'Warranty Expired' ? 'text-red-600' :
+                              'text-green-600'
+                            }`}>
+                              {warrantyStatus}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

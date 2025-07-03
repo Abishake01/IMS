@@ -25,6 +25,9 @@ export interface InventoryItem {
   specifications: Record<string, any>;
   image_url: string;
   status: 'active' | 'discontinued' | 'out_of_stock';
+  has_warranty: boolean;
+  warranty_duration: number;
+  warranty_unit: 'days' | 'months' | 'years';
   created_at: string;
   updated_at: string;
 }
@@ -102,6 +105,36 @@ export interface DailyReport {
   updated_at: string;
 }
 
+// Utility function to calculate warranty status
+export function getWarrantyStatus(saleDate: string, hasWarranty: boolean, duration: number, unit: string) {
+  if (!hasWarranty) return 'No Warranty';
+  
+  const sale = new Date(saleDate);
+  const now = new Date();
+  
+  let expiryDate = new Date(sale);
+  
+  switch (unit) {
+    case 'days':
+      expiryDate.setDate(sale.getDate() + duration);
+      break;
+    case 'months':
+      expiryDate.setMonth(sale.getMonth() + duration);
+      break;
+    case 'years':
+      expiryDate.setFullYear(sale.getFullYear() + duration);
+      break;
+  }
+  
+  if (now <= expiryDate) {
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return `${diffDays} days remaining`;
+  } else {
+    return 'Warranty Expired';
+  }
+}
+
 // Sample data for fallback
 export const sampleInventoryData: InventoryItem[] = [
   {
@@ -118,6 +151,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { storage: '128GB', color: 'Natural Titanium', display: '6.1 inch' },
     image_url: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: true,
+    warranty_duration: 12,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -135,6 +171,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { storage: '256GB', color: 'Titanium Black', display: '6.8 inch' },
     image_url: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: true,
+    warranty_duration: 12,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -152,6 +191,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { battery: '30 hours', features: 'ANC, Spatial Audio' },
     image_url: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: true,
+    warranty_duration: 6,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -169,6 +211,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { material: 'Silicone', color: 'Black' },
     image_url: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: false,
+    warranty_duration: 0,
+    warranty_unit: 'days',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -186,6 +231,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { battery: '28 hours', features: 'ANC, 360 Audio' },
     image_url: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: true,
+    warranty_duration: 6,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -203,6 +251,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { storage: '64GB', color: 'Space Gray', display: '10.9 inch' },
     image_url: 'https://images.pexels.com/photos/1334597/pexels-photo-1334597.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'out_of_stock',
+    has_warranty: true,
+    warranty_duration: 12,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -220,6 +271,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { size: '45mm', color: 'Midnight', features: 'GPS, Cellular' },
     image_url: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: true,
+    warranty_duration: 12,
+    warranty_unit: 'months',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -237,6 +291,9 @@ export const sampleInventoryData: InventoryItem[] = [
     specifications: { power: '20W', connector: 'USB-C' },
     image_url: 'https://images.pexels.com/photos/4526414/pexels-photo-4526414.jpeg?auto=compress&cs=tinysrgb&w=400',
     status: 'active',
+    has_warranty: false,
+    warranty_duration: 0,
+    warranty_unit: 'days',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }

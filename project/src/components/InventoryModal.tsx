@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save} from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { InventoryItem } from '../lib/supabase';
 
 interface InventoryModalProps {
@@ -10,8 +10,10 @@ interface InventoryModalProps {
   title: string;
 }
 
-const categories = ['phones', 'accessories', 'cases', 'chargers', 'tablets', 'smart_watches'];
+const categories = ['Feature Phone', 'Smartphone','Speaker','Charger','V8 Data cable','C Data cable','Iphone cable','3in cable'];
 const statuses = ['active', 'discontinued', 'out_of_stock'];
+
+ 
 
 const storageOptions = [
   '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
@@ -31,7 +33,10 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     description: '',
     specifications: {},
     image_url: '',
-    status: 'active' as 'active' | 'discontinued' | 'out_of_stock'
+    status: 'active',
+    has_warranty: false,
+    warranty_duration: '',
+    warranty_unit: 'months'  
   });
   const [phoneSpecs, setPhoneSpecs] = useState({
     storage: '',
@@ -54,7 +59,10 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
         description: item.description,
         specifications: item.specifications,
         image_url: item.image_url,
-        status: item.status
+        status: item.status,
+        has_warranty: item.has_warranty || false,
+        warranty_duration: item.warranty_duration?.toString() || '',
+        warranty_unit: item.warranty_unit || 'months'
       });
       
       if (item.category === 'phones' && item.specifications) {
@@ -77,7 +85,10 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
         description: '',
         specifications: {},
         image_url: '',
-        status: 'active'
+        status: 'active',
+        has_warranty: false,
+        warranty_duration: '',
+        warranty_unit: 'months'
       });
       setPhoneSpecs({
         storage: '',
@@ -111,6 +122,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
         cost_price: parseFloat(formData.cost_price) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         min_stock_level: parseInt(formData.min_stock_level) || 0,
+        warranty_duration: parseInt(formData.warranty_duration) || 0,
         specifications
       };
       
@@ -124,11 +136,20 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handlePhoneSpecChange = (field: string, value: string) => {
@@ -246,7 +267,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selling Price (₹) *
+                Price (₹) *
               </label>
               <input
                 type="number"
@@ -256,13 +277,13 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="999.99" 
+                placeholder="999.99"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Original Price (₹) *
+                Cost Price (₹) *
               </label>
               <input
                 type="number"
@@ -339,44 +360,116 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             </div>
           </div>
 
+          {/* Warranty Section */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Warranty Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Has Warranty
+                </label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="has_warranty"
+                      checked={formData.has_warranty === true}
+                      onChange={() => setFormData(prev => ({ ...prev, has_warranty: true }))}
+                      className="mr-2"
+                    />
+                    Yes
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="has_warranty"
+                      checked={formData.has_warranty === false}
+                      onChange={() => setFormData(prev => ({ ...prev, has_warranty: false, warranty_duration: '', warranty_unit: 'months' }))}
+                      className="mr-2"
+                    />
+                    No
+                  </label>
+                </div>
+              </div>
+
+              {formData.has_warranty && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Warranty Duration *
+                    </label>
+                    <input
+                      type="number"
+                      name="warranty_duration"
+                      value={formData.warranty_duration}
+                      onChange={handleChange}
+                      required={formData.has_warranty}
+                      min="1"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="12"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Warranty Unit *
+                    </label>
+                    <select
+                      name="warranty_unit"
+                      value={formData.warranty_unit}
+                      onChange={handleChange}
+                      required={formData.has_warranty}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="days">Days</option>
+                      <option value="months">Months</option>
+                      <option value="years">Years</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Phone-specific fields */}
-{formData.category === 'phones' && (
-  <div className="border-t pt-6">
-    <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Storage *
-        </label>
-        <select
-          value={phoneSpecs.storage}
-          onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">Select Storage</option>
-          {storageOptions.map(storage => (
-            <option key={storage} value={storage}>{storage}</option>
-          ))}
-        </select>
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Color *
-        </label>
-        <input
-          type="text"
-          value={phoneSpecs.color}
-          onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Enter color"
-        />
-      </div>
-    </div>
-  </div>
-)}
+          {formData.category === 'phones' && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Storage *
+                  </label>
+                  <select
+                    value={phoneSpecs.storage}
+                    onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Storage</option>
+                    {storageOptions.map(storage => (
+                      <option key={storage} value={storage}>{storage}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Color *
+  </label>
+  <input
+    type="text"
+    value={phoneSpecs.color}
+    onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+    required
+    placeholder="Enter Color"
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  />
+</div>
+
+              </div>
+            </div>
+          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
