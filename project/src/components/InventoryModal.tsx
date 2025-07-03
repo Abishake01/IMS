@@ -31,7 +31,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     description: '',
     specifications: {},
     image_url: '',
-    status: 'active' as const
+    status: 'active' as 'active' | 'discontinued' | 'out_of_stock'
   });
   const [phoneSpecs, setPhoneSpecs] = useState({
     storage: '',

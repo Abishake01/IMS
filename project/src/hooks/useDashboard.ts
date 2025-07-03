@@ -65,13 +65,20 @@ export function useDashboard() {
           .from('inventory_items')
           .select('*', { count: 'exact', head: true });
 
-        // Fetch low stock items - items where stock_quantity <= min_stock_level
-        const { data: lowStockData } = await supabase
+        // Fetch low stock items - using a more explicit query
+        const { data: allItems } = await supabase
           .from('inventory_items')
           .select('id, name, stock_quantity, min_stock_level')
-          .lte('stock_quantity', 'min_stock_level');
+          .eq('status', 'active');
 
-        console.log('Low stock query result:', lowStockData);
+        // Filter low stock items in JavaScript to ensure accuracy
+        const lowStockData = allItems?.filter(item => 
+          item.stock_quantity <= item.min_stock_level
+        ) || [];
+
+        console.log('All items:', allItems?.length);
+        console.log('Low stock items:', lowStockData.length);
+        console.log('Low stock items details:', lowStockData);
 
         // Fetch total customers (using sales for customer count)
         const { data: uniqueCustomers } = await supabase
@@ -112,13 +119,13 @@ export function useDashboard() {
         setStats({
           todaySales,
           totalProducts: totalProducts || 0,
-          lowStockCount: lowStockData?.length || 0,
+          lowStockCount: lowStockData.length,
           totalCustomers,
           salesGrowth: 5.2 // Mock growth percentage
         });
 
         setRecentSales(recentSalesData || []);
-        setLowStockItems(lowStockData || []);
+        setLowStockItems(lowStockData);
         setSalesData(salesChartData);
       } else {
         // Mock data for local mode - include low stock items

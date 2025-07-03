@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Wrench, Menu, Smartphone, User, Phone, DollarSign, MessageSquare, AlertCircle } from 'lucide-react';
+import { Save, Wrench, Menu, Smartphone, User, Phone, DollarSign, MessageSquare, AlertCircle, Calendar } from 'lucide-react';
 import { useServices } from '../hooks/useServices';
 
 interface ServiceProps {
@@ -14,7 +14,9 @@ export function Service({ onMenuClick }: ServiceProps) {
     customer_name: '',
     phone_number: '',
     amount: '',
-    comments: ''
+     
+    comments: '',
+    service_date: new Date().toISOString().split('T')[0] // Default to today
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -28,7 +30,7 @@ export function Service({ onMenuClick }: ServiceProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.model_name || !formData.problem || !formData.customer_name || !formData.phone_number || !formData.amount) {
+    if (!formData.model_name || !formData.problem || !formData.customer_name || !formData.phone_number || !formData.amount || !formData.service_date) {
       alert('Please fill in all required fields');
       return;
     }
@@ -36,6 +38,7 @@ export function Service({ onMenuClick }: ServiceProps) {
     const serviceData = {
       ...formData,
       amount: parseFloat(formData.amount) || 0
+        
     };
 
     const result = await createService(serviceData);
@@ -47,7 +50,9 @@ export function Service({ onMenuClick }: ServiceProps) {
         customer_name: '',
         phone_number: '',
         amount: '',
-        comments: ''
+         
+        comments: '',
+        service_date: new Date().toISOString().split('T')[0]
       });
       alert('Service request created successfully!');
     } else {
@@ -70,7 +75,7 @@ export function Service({ onMenuClick }: ServiceProps) {
         </button>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -134,6 +139,21 @@ export function Service({ onMenuClick }: ServiceProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-2" />
+                  Service Date *
+                </label>
+                <input
+                  type="date"
+                  name="service_date"
+                  value={formData.service_date}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   <DollarSign className="w-4 h-4 inline mr-2" />
                   Service Amount (₹) *
                 </label>
@@ -149,6 +169,8 @@ export function Service({ onMenuClick }: ServiceProps) {
                   placeholder="0.00"
                 />
               </div>
+
+               
             </div>
 
             <div>
@@ -191,7 +213,9 @@ export function Service({ onMenuClick }: ServiceProps) {
                   customer_name: '',
                   phone_number: '',
                   amount: '',
-                  comments: ''
+                   
+                  comments: '',
+                  service_date: new Date().toISOString().split('T')[0]
                 })}
                 className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >

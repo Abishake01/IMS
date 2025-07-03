@@ -11,6 +11,7 @@ interface AdminService {
   material_cost: number;
   comments: string;
   status: string;
+  service_date: string;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ interface AdminServiceFormData {
   material_cost: number;
   comments: string;
   status: string;
+  service_date: string;
 }
 
 export function useAdminServices() {
@@ -55,6 +57,7 @@ export function useAdminServices() {
             material_cost: 5000,
             comments: 'Original screen replacement',
             status: 'completed',
+            service_date: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }

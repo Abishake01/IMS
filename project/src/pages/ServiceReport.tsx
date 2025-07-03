@@ -19,7 +19,7 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
     
     let matchesDate = true;
     if (dateFilter !== 'all') {
-      const serviceDate = new Date(service.created_at);
+      const serviceDate = new Date(service.service_date || service.created_at);
       const today = new Date();
       
       switch (dateFilter) {
@@ -42,16 +42,17 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
 
   const exportServiceReport = () => {
     const csvContent = [
-      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Amount', 'Comments', 'Date'],
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Comments'],
       ...filteredServices.map((service, index) => [
         index + 1,
         service.model_name,
         service.problem,
         service.customer_name,
         service.phone_number,
+        format(new Date(service.service_date || service.created_at), 'yyyy-MM-dd'),
         `₹${service.amount.toFixed(2)}`,
-        service.comments || '-',
-        format(new Date(service.created_at), 'yyyy-MM-dd')
+        service.material_cost ? `₹${service.material_cost.toFixed(2)}` : '₹0.00',
+        service.comments || '-'
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -151,14 +152,14 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
                   Phone Number
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Comments
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
                 </th>
               </tr>
             </thead>
@@ -180,14 +181,15 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {service.phone_number}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {format(new Date(service.service_date || service.created_at), 'MMM dd, yyyy')}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ₹{service.amount.toFixed(2)}
-                  </td> 
+                  </td>
+                  
                   <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                     {service.comments || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {format(new Date(service.created_at), 'MMM dd, yyyy')}
                   </td>
                 </tr>
               ))}

@@ -7,7 +7,9 @@ interface ServiceFormData {
   customer_name: string;
   phone_number: string;
   amount: number;
+  material_cost?: number;
   comments: string;
+  service_date: string;
 }
 
 export function useServices() {
@@ -36,7 +38,9 @@ export function useServices() {
             customer_name: 'John Doe',
             phone_number: '+91 9876543210',
             amount: 5000,
+            material_cost: 3000,
             comments: 'Customer dropped the phone',
+            service_date: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }

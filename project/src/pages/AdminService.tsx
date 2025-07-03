@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Wrench, Menu, Smartphone, User, Phone, DollarSign, MessageSquare, AlertCircle, Package } from 'lucide-react';
+import { Save, Wrench, Menu, Smartphone, User, Phone, DollarSign, MessageSquare, AlertCircle, Package, Calendar } from 'lucide-react';
 import { useAdminServices } from '../hooks/useAdminServices';
 
 interface AdminServiceProps {
@@ -16,7 +16,8 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
     amount: '',
     material_cost: '',
     comments: '',
-    status: 'pending'
+    status: 'pending',
+    service_date: new Date().toISOString().split('T')[0] // Default to today
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -30,7 +31,7 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.model_name || !formData.problem || !formData.customer_name || !formData.phone_number || !formData.amount) {
+    if (!formData.model_name || !formData.problem || !formData.customer_name || !formData.phone_number || !formData.amount || !formData.service_date) {
       alert('Please fill in all required fields');
       return;
     }
@@ -52,7 +53,8 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
         amount: '',
         material_cost: '',
         comments: '',
-        status: 'pending'
+        status: 'pending',
+        service_date: new Date().toISOString().split('T')[0]
       });
       alert('Service record created successfully!');
     } else {
@@ -134,6 +136,21 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="+91 9876543210"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-2" />
+                  Service Date *
+                </label>
+                <input
+                  type="date"
+                  name="service_date"
+                  value={formData.service_date}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
 
@@ -232,7 +249,8 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
                   amount: '',
                   material_cost: '',
                   comments: '',
-                  status: 'pending'
+                  status: 'pending',
+                  service_date: new Date().toISOString().split('T')[0]
                 })}
                 className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >

@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Plus, Search, Trash2, Calculator, User, Phone, Menu } from 'lucide-react';
+import { useState} from 'react';
+import { Plus, Search, Trash2, Calculator, User, Phone, Menu, Eye } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { useBilling } from '../hooks/useBilling';
 import { InventoryItem } from '../lib/supabase';
+import { BillPreviewModal } from '../components/BillPreviewModal';
 
 interface BillItem {
   id: string;
@@ -25,6 +26,7 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [showBillPreview, setShowBillPreview] = useState(false);
 
   const filteredItems = items.filter(item => 
     item.status === 'active' && 
@@ -77,7 +79,7 @@ export function Billing({ onMenuClick }: BillingProps) {
   const discountAmount = (subtotal * discount) / 100;
   const total = subtotal - discountAmount;
 
-  const handleCreateSale = async () => {
+  const handleShowBillPreview = () => {
     if (billItems.length === 0) {
       alert('Please add items to the bill');
       return;
@@ -88,6 +90,10 @@ export function Billing({ onMenuClick }: BillingProps) {
       return;
     }
 
+    setShowBillPreview(true);
+  };
+
+  const handleConfirmSale = async () => {
     const saleData = {
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -113,6 +119,7 @@ export function Billing({ onMenuClick }: BillingProps) {
       setCustomerPhone('');
       setDiscount(0);
       setPaymentMethod('cash');
+      setShowBillPreview(false);
       alert('Sale completed successfully!');
     } else {
       alert('Failed to create sale. Please try again.');
@@ -201,11 +208,10 @@ export function Billing({ onMenuClick }: BillingProps) {
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="tel"
-                  placeholder="Phone Number *"
+                  placeholder="Phone Number"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
                 />
               </div>
             </div>
@@ -265,11 +271,10 @@ export function Billing({ onMenuClick }: BillingProps) {
                   <input
                     type="number"
                     min="0"
+                    max="100"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value))}
+                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                     className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
-                    step="0.01"
-                    placeholder="0" 
                   />
                 </div>
                 
@@ -302,17 +307,33 @@ export function Billing({ onMenuClick }: BillingProps) {
                 </div>
 
                 <button
-                  onClick={handleCreateSale}
-                  disabled={loading || billItems.length === 0 || !customerName.trim()}
-                  className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleShowBillPreview}
+                  disabled={billItems.length === 0 || !customerName.trim()}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : 'Complete Sale'}
+                  <Eye className="w-4 h-4" />
+                  Print Bill Preview
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Bill Preview Modal */}
+      <BillPreviewModal
+        isOpen={showBillPreview}
+        onClose={() => setShowBillPreview(false)}
+        onConfirm={handleConfirmSale}
+        billItems={billItems}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        subtotal={subtotal}
+        discountAmount={discountAmount}
+        total={total}
+        paymentMethod={paymentMethod}
+        loading={loading}
+      />
     </div>
   );
 }

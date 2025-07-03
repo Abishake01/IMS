@@ -75,6 +75,7 @@ export interface Service {
   amount: number;
   material_cost?: number;
   comments: string;
+  service_date?: string;
   created_at: string;
   updated_at: string;
 }

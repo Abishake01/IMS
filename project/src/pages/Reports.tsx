@@ -13,7 +13,7 @@ interface ReportsProps {
 
 export function Reports({ onMenuClick }: ReportsProps) {
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'services' | 'admin-services'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'user-services' | 'admin-services'>('overview');
   const [dateRange, setDateRange] = useState(() => {
     const today = new Date();
     return {
@@ -97,19 +97,19 @@ export function Reports({ onMenuClick }: ReportsProps) {
     window.URL.revokeObjectURL(url);
   };
 
-  const exportServiceReport = () => {
+  const exportUserServiceReport = () => {
     const csvContent = [
-      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Amount', 'Material Cost', 'Comments', 'Date'],
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Comments'],
       ...serviceDetails.map((item, index) => [
         index + 1,
         item.model_name,
         item.problem,
         item.customer_name,
         item.phone_number,
+        format(new Date(item.service_date || item.created_at), 'yyyy-MM-dd'),
         `₹${item.amount.toFixed(2)}`,
         `₹${(item.material_cost || 0).toFixed(2)}`,
-        item.comments,
-        format(new Date(item.created_at), 'yyyy-MM-dd')
+        item.comments
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -117,7 +117,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `service-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `user-service-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -126,18 +126,18 @@ export function Reports({ onMenuClick }: ReportsProps) {
 
   const exportAdminServiceReport = () => {
     const csvContent = [
-      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Amount', 'Material Cost', 'Status', 'Comments', 'Date'],
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Material Cost', 'Status', 'Comments'],
       ...adminServices.map((item, index) => [
         index + 1,
         item.model_name,
         item.problem,
         item.customer_name,
         item.phone_number,
+        format(new Date(item.service_date || item.created_at), 'yyyy-MM-dd'),
         `₹${item.amount.toFixed(2)}`,
         `₹${item.material_cost.toFixed(2)}`,
         item.status,
-        item.comments,
-        format(new Date(item.created_at), 'yyyy-MM-dd')
+        item.comments
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -158,8 +158,8 @@ export function Reports({ onMenuClick }: ReportsProps) {
         return exportOverviewReport;
       case 'products':
         return exportProductReport;
-      case 'services':
-        return exportServiceReport;
+      case 'user-services':
+        return exportUserServiceReport;
       case 'admin-services':
         return exportAdminServiceReport;
       default:
@@ -173,8 +173,8 @@ export function Reports({ onMenuClick }: ReportsProps) {
         return 'Overview';
       case 'products':
         return 'Products';
-      case 'services':
-        return 'Services';
+      case 'user-services':
+        return 'User Services';
       case 'admin-services':
         return 'Admin Services';
       default:
@@ -282,9 +282,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
               Product Details
             </button>
             <button
-              onClick={() => setActiveTab('services')}
+              onClick={() => setActiveTab('user-services')}
               className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'services'
+                activeTab === 'user-services'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
@@ -458,7 +458,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
             </div>
           )}
         </div>
-      ) : activeTab === 'services' ? (
+      ) : activeTab === 'user-services' ? (
         /* User Services Tab */
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
@@ -488,16 +488,14 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     Phone Number
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Service Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Material Cost
-                  </th>
+                  
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comments
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
                   </th>
                 </tr>
               </thead>
@@ -519,17 +517,15 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {item.phone_number}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {format(new Date(item.service_date), 'MMM dd, yyyy')}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ₹{item.amount.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{(item.material_cost || 0).toFixed(2)}
-                    </td>
+                     
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {item.comments || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(item.created_at), 'MMM dd, yyyy')}
                     </td>
                   </tr>
                 ))}
@@ -540,9 +536,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
           {serviceDetails.length === 0 && (
             <div className="text-center py-12">
               <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No service records found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No user service records found</h3>
               <p className="text-gray-500">
-                No service requests were created in the selected date range.
+                No user service requests were created in the selected date range.
               </p>
             </div>
           )}
@@ -577,6 +573,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     Phone Number
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Service Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -587,9 +586,6 @@ export function Reports({ onMenuClick }: ReportsProps) {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comments
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
                   </th>
                 </tr>
               </thead>
@@ -611,6 +607,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {item.phone_number}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {format(new Date(item.service_date || item.created_at), 'MMM dd, yyyy')}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ₹{item.amount.toFixed(2)}
                     </td>
@@ -629,9 +628,6 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {item.comments || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(item.created_at), 'MMM dd, yyyy')}
                     </td>
                   </tr>
                 ))}
