@@ -1,5 +1,6 @@
+import React from 'react';
 import { Edit2, Trash2, Package, AlertTriangle } from 'lucide-react';
-import { InventoryItem } from '../lib/supabase';
+import { InventoryItem, getImageSrc } from '../lib/supabase';
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -10,6 +11,7 @@ interface InventoryCardProps {
 export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
   const isLowStock = item.stock_quantity <= item.min_stock_level;
   const isOutOfStock = item.stock_quantity === 0;
+  const imageSrc = getImageSrc(item);
 
   const getStockColor = () => {
     if (isOutOfStock) return 'text-red-600 bg-red-50';
@@ -25,9 +27,9 @@ export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
       <div className="aspect-w-16 aspect-h-9 bg-gray-100">
-        {item.image_url ? (
+        {imageSrc ? (
           <img
-            src={item.image_url}
+            src={imageSrc}
             alt={item.name}
             className="w-full h-48 object-cover"
           />
@@ -53,6 +55,11 @@ export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
           <div>
             <p className="text-xl font-bold text-gray-900">₹{item.price}</p>
             <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+            {item.has_warranty && (
+              <p className="text-xs text-green-600 mt-1">
+                {item.warranty_duration} {item.warranty_unit} warranty
+              </p>
+            )}
           </div>
           <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${getStockColor()}`}>
             {getStockIcon()}

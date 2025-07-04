@@ -437,10 +437,10 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {item.quantity}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{item.unit_price.toFixed(2)}
+                      {item.unit_price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ₹{item.total_price.toFixed(2)}
+                      {item.total_price.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -521,7 +521,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {format(new Date(item.service_date), 'MMM dd, yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ₹{item.amount.toFixed(2)}
+                      {item.amount.toFixed(2)}
                     </td>
                      
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
@@ -611,10 +611,10 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {format(new Date(item.service_date || item.created_at), 'MMM dd, yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ₹{item.amount.toFixed(2)}
+                      {item.amount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{item.material_cost.toFixed(2)}
+                      {item.material_cost.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

@@ -24,12 +24,29 @@ export interface InventoryItem {
   description: string;
   specifications: Record<string, any>;
   image_url: string;
+  image_base64?: string;
   status: 'active' | 'discontinued' | 'out_of_stock';
   has_warranty: boolean;
   warranty_duration: number;
   warranty_unit: 'days' | 'months' | 'years';
   created_at: string;
   updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  display_name: string;
+  created_at: string;
+}
+
+export interface PhoneIMEI {
+  id: string;
+  inventory_item_id: string;
+  imei_number: string;
+  is_sold: boolean;
+  sale_item_id?: string;
+  created_at: string;
 }
 
 export interface Customer {
@@ -103,6 +120,29 @@ export interface DailyReport {
   top_selling_items: any[];
   created_at: string;
   updated_at: string;
+}
+
+// Utility functions for base64 image handling
+export function convertImageToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export function getImageSrc(item: InventoryItem): string {
+  if (item.image_base64) {
+    return item.image_base64;
+  }
+  if (item.image_url) {
+    return item.image_url;
+  }
+  return '';
 }
 
 // Utility function to calculate warranty status

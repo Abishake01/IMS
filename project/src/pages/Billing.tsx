@@ -1,8 +1,10 @@
-import { useState} from 'react';
-import { Plus, Search, Trash2, Calculator, User, Phone, Menu, Eye, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Trash2, Calculator, User, Phone, Menu, Eye, Filter, Smartphone } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { useBilling } from '../hooks/useBilling';
-import { InventoryItem } from '../lib/supabase';
+import { useCategories } from '../hooks/useCategories';
+import { usePhoneIMEI } from '../hooks/usePhoneIMEI';
+import { InventoryItem, getImageSrc } from '../lib/supabase';
 import { BillPreviewModal } from '../components/BillPreviewModal';
 
 interface BillItem {
@@ -11,17 +13,19 @@ interface BillItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  selectedIMEI?: string;
 }
 
 interface BillingProps {
   onMenuClick: () => void;
 }
 
-const categories = ['all', 'phones', 'accessories', 'cases', 'chargers', 'tablets', 'smart_watches'];
-
 export function Billing({ onMenuClick }: BillingProps) {
   const { items } = useInventory();
+  const { categories } = useCategories();
+  const { getAvailableIMEIs } = usePhoneIMEI();
   const { createSale, loading } = useBilling();
+  
   const [billItems, setBillItems] = useState<BillItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -30,6 +34,7 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
+  const [availableIMEIs, setAvailableIMEIs] = useState<{[key: string]: any[]}>({});
 
   const filteredItems = items.filter(item => 
     item.status === 'active' && 
@@ -40,7 +45,7 @@ export function Billing({ onMenuClick }: BillingProps) {
      item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const addToBill = (item: InventoryItem) => {
+  const addToBill = async (item: InventoryItem) => {
     const existingItem = billItems.find(billItem => billItem.id === item.id);
     
     if (existingItem) {
@@ -52,6 +57,12 @@ export function Billing({ onMenuClick }: BillingProps) {
         ));
       }
     } else {
+      // For phones, get available IMEIs
+      if (item.category === 'phones') {
+        const imeis = await getAvailableIMEIs(item.id);
+        setAvailableIMEIs(prev => ({ ...prev, [item.id]: imeis }));
+      }
+      
       setBillItems(prev => [...prev, {
         id: item.id,
         item,
@@ -75,6 +86,14 @@ export function Billing({ onMenuClick }: BillingProps) {
     ));
   };
 
+  const updateSelectedIMEI = (id: string, imei: string) => {
+    setBillItems(prev => prev.map(billItem =>
+      billItem.id === id
+        ? { ...billItem, selectedIMEI: imei }
+        : billItem
+    ));
+  };
+
   const removeFromBill = (id: string) => {
     setBillItems(prev => prev.filter(item => item.id !== id));
   };
@@ -94,6 +113,16 @@ export function Billing({ onMenuClick }: BillingProps) {
       return;
     }
 
+    // Check if all phones have selected IMEIs
+    const phonesWithoutIMEI = billItems.filter(item => 
+      item.item.category === 'phones' && !item.selectedIMEI
+    );
+
+    if (phonesWithoutIMEI.length > 0) {
+      alert('Please select IMEI numbers for all phones');
+      return;
+    }
+
     setShowBillPreview(true);
   };
 
@@ -108,7 +137,7 @@ export function Billing({ onMenuClick }: BillingProps) {
       items: billItems.map(billItem => ({
         inventory_item_id: billItem.item.id,
         item_name: billItem.item.name,
-        item_sku: billItem.item.sku,
+        item_sku: billItem.selectedIMEI || billItem.item.sku,
         quantity: billItem.quantity,
         unit_price: billItem.unitPrice,
         total_price: billItem.totalPrice
@@ -124,6 +153,7 @@ export function Billing({ onMenuClick }: BillingProps) {
       setDiscount(0);
       setPaymentMethod('cash');
       setShowBillPreview(false);
+      setAvailableIMEIs({});
       alert('Sale completed successfully!');
     } else {
       alert('Failed to create sale. Please try again.');
@@ -171,10 +201,10 @@ export function Billing({ onMenuClick }: BillingProps) {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
+                  <option value="all">All Categories</option>
                   {categories.map(category => (
-                    <option key={category} value={category}>
-                      {category === 'all' ? 'All Categories' : 
-                       category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
+                    <option key={category.id} value={category.name}>
+                      {category.display_name}
                     </option>
                   ))}
                 </select>
@@ -190,34 +220,44 @@ export function Billing({ onMenuClick }: BillingProps) {
                 <p className="text-sm">Try adjusting your search or category filter</p>
               </div>
             ) : (
-              filteredItems.map(item => (
-                <div
-                  key={item.id}
-                  className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => addToBill(item)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500">{item.brand} • {item.sku}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-gray-500">Stock: {item.stock_quantity}</p>
-                        {item.has_warranty && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {item.warranty_duration} {item.warranty_unit} warranty
-                          </span>
-                        )}
+              filteredItems.map(item => {
+                const imageSrc = getImageSrc(item);
+                return (
+                  <div
+                    key={item.id}
+                    className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => addToBill(item)}
+                  >
+                    <div className="flex items-center gap-4">
+                      {imageSrc && (
+                        <img
+                          src={imageSrc}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-sm text-gray-500">{item.brand} • {item.sku}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-gray-500">Stock: {item.stock_quantity}</p>
+                          {item.has_warranty && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {item.warranty_duration} {item.warranty_unit} warranty
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">₹{item.price}</p>
+                        <button className="text-blue-600 hover:text-blue-700 text-sm">
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">₹{item.price}</p>
-                      <button className="text-blue-600 hover:text-blue-700 text-sm">
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -247,11 +287,10 @@ export function Billing({ onMenuClick }: BillingProps) {
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="tel"
-                  placeholder="Phone Number *"
+                  placeholder="Phone Number"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
                 />
               </div>
             </div>
@@ -265,40 +304,75 @@ export function Billing({ onMenuClick }: BillingProps) {
                 <p>No items added to bill</p>
               </div>
             ) : (
-              billItems.map(billItem => (
-                <div key={billItem.id} className="p-4 border-b border-gray-100">
-                  <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{billItem.item.name}</h4>
-                      <p className="text-sm text-gray-500">₹{billItem.unitPrice} each</p>
-                      {billItem.item.has_warranty && (
-                        <p className="text-xs text-green-600">
-                          {billItem.item.warranty_duration} {billItem.item.warranty_unit} warranty
-                        </p>
+              billItems.map(billItem => {
+                const imageSrc = getImageSrc(billItem.item);
+                const itemIMEIs = availableIMEIs[billItem.item.id] || [];
+                
+                return (
+                  <div key={billItem.id} className="p-4 border-b border-gray-100">
+                    <div className="flex items-start gap-3">
+                      {imageSrc && (
+                        <img
+                          src={imageSrc}
+                          alt={billItem.item.name}
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                        />
                       )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        max={billItem.item.stock_quantity}
-                        value={billItem.quantity}
-                        onChange={(e) => updateQuantity(billItem.id, parseInt(e.target.value) || 0)}
-                        className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
-                      />
-                      <span className="font-semibold text-gray-900 w-20 text-right">
-                        ₹{billItem.totalPrice.toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => removeFromBill(billItem.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{billItem.item.name}</h4>
+                        <p className="text-sm text-gray-500">₹{billItem.unitPrice} each</p>
+                        {billItem.item.has_warranty && (
+                          <p className="text-xs text-green-600">
+                            {billItem.item.warranty_duration} {billItem.item.warranty_unit} warranty
+                          </p>
+                        )}
+                        
+                        {/* IMEI Selection for Phones */}
+                        {billItem.item.category === 'phones' && itemIMEIs.length > 0 && (
+                          <div className="mt-2">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              <Smartphone className="w-3 h-3 inline mr-1" />
+                              Select IMEI:
+                            </label>
+                            <select
+                              value={billItem.selectedIMEI || ''}
+                              onChange={(e) => updateSelectedIMEI(billItem.id, e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            >
+                              <option value="">Choose IMEI</option>
+                              {itemIMEIs.map(imei => (
+                                <option key={imei.id} value={imei.imei_number}>
+                                  {imei.imei_number}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max={billItem.item.stock_quantity}
+                          value={billItem.quantity}
+                          onChange={(e) => updateQuantity(billItem.id, parseInt(e.target.value) || 0)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                        />
+                        <span className="font-semibold text-gray-900 w-20 text-right">
+                          ₹{billItem.totalPrice.toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => removeFromBill(billItem.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

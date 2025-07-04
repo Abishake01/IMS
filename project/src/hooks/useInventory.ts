@@ -57,15 +57,11 @@ export function useInventory() {
         return { success: true, data: newItem };
       }
     } catch (err) {
-      // Fallback to local storage even if Supabase fails
-      const newItem: InventoryItem = {
-        ...item,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+      console.error('Error adding item:', err);
+      return { 
+        success: false, 
+        error: err instanceof Error ? err.message : 'Failed to save item to database'
       };
-      setItems(prev => [newItem, ...prev]);
-      return { success: true, data: newItem };
     }
   };
 
@@ -91,18 +87,38 @@ export function useInventory() {
         return { success: true, data: updatedItem };
       }
     } catch (err) {
-      // Fallback to local update
-      const updatedItem = { ...updates, updated_at: new Date().toISOString() };
-      setItems(prev => prev.map(item => 
-        item.id === id ? { ...item, ...updatedItem } : item
-      ));
-      return { success: true, data: updatedItem };
+      console.error('Error updating item:', err);
+      return { 
+        success: false, 
+        error: err instanceof Error ? err.message : 'Failed to update item in database'
+      };
     }
   };
 
   const deleteItem = async (id: string) => {
     try {
       if (isSupabaseConnected && supabase) {
+        // Check if item has been sold
+        const { data: saleItems } = await supabase
+          .from('sale_items')
+          .select('id')
+          .eq('inventory_item_id', id)
+          .limit(1);
+
+        if (saleItems && saleItems.length > 0) {
+          // Item has been sold, update status to discontinued instead of deleting
+          const result = await updateItem(id, { status: 'discontinued' });
+          if (result.success) {
+            alert('This item has been sold and cannot be deleted. Status has been changed to "Discontinued" instead.');
+            return { success: true };
+          } else {
+            return { 
+              success: false, 
+              error: 'Cannot delete item that has been sold. Failed to update status.' 
+            };
+          }
+        }
+
         // First, optimistically update the UI
         const originalItems = [...items];
         setItems(prev => prev.filter(item => item.id !== id));

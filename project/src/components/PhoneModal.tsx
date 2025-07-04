@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Package, Upload } from 'lucide-react';
+import { X, Save, Smartphone, Upload, Plus, Trash2 } from 'lucide-react';
 import { InventoryItem, convertImageToBase64 } from '../lib/supabase';
-import { useCategories } from '../hooks/useCategories';
+import { usePhoneIMEI } from '../hooks/usePhoneIMEI';
 
-interface InventoryModalProps {
+interface PhoneModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>) => Promise<any>;
@@ -11,15 +11,30 @@ interface InventoryModalProps {
   title: string;
 }
 
+const phoneCategories = [
+  { value: 'featured_phones', label: 'Featured Phone' },
+  { value: 'button_phones', label: 'Button Phone' }
+];
+
 const statuses = ['active', 'discontinued', 'out_of_stock'];
 
-export function InventoryModal({ isOpen, onClose, onSave, item, title }: InventoryModalProps) {
-  const { categories, createCategory } = useCategories();
+const phoneColors = [
+  'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Blue', 'Green', 
+  'Purple', 'Red', 'Yellow', 'Pink', 'Coral', 'Midnight', 'Starlight', 'Deep Purple'
+];
+
+const storageOptions = [
+  '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
+  '4GB+64GB', '6GB+128GB', '8GB+128GB', '8GB+256GB', '12GB+256GB', '12GB+512GB'
+];
+
+export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalProps) {
+  const { createPhoneIMEI, fetchPhoneIMEIs, phoneIMEIs, deletePhoneIMEI } = usePhoneIMEI();
   
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
-    category: 'accessories',
+    category: 'featured_phones',
     sku: '',
     price: '',
     cost_price: '',
@@ -35,16 +50,13 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     warranty_unit: 'months' as const
   });
   
-  const [newCategory, setNewCategory] = useState('');
-  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [phoneSpecs, setPhoneSpecs] = useState({
+    storage: '',
+    color: ''
+  });
+  
+  const [imeiNumbers, setImeiNumbers] = useState<string[]>(['']);
   const [loading, setLoading] = useState(false);
-
-  // Filter out phone categories for regular products
-  const productCategories = categories.filter(cat => 
-    cat.name !== 'phones' && 
-    cat.name !== 'featured_phones' && 
-    cat.name !== 'button_phones'
-  );
 
   useEffect(() => {
     if (item) {
@@ -66,16 +78,41 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
         warranty_duration: item.warranty_duration?.toString() || '',
         warranty_unit: item.warranty_unit || 'months'
       });
+      
+      if (item.specifications) {
+        setPhoneSpecs({
+          storage: item.specifications.storage || '',
+          color: item.specifications.color || ''
+        });
+      }
+      
+      fetchPhoneIMEIs(item.id);
     } else {
       resetForm();
     }
   }, [item]);
 
+  useEffect(() => {
+    // Update IMEI numbers based on stock quantity
+    const quantity = parseInt(formData.stock_quantity) || 0;
+    const currentIMEIs = [...imeiNumbers];
+    
+    if (quantity > currentIMEIs.length) {
+      for (let i = currentIMEIs.length; i < quantity; i++) {
+        currentIMEIs.push('');
+      }
+    } else if (quantity < currentIMEIs.length) {
+      currentIMEIs.splice(quantity);
+    }
+    
+    setImeiNumbers(currentIMEIs);
+  }, [formData.stock_quantity]);
+
   const resetForm = () => {
     setFormData({
       name: '',
       brand: '',
-      category: 'accessories',
+      category: 'featured_phones',
       sku: '',
       price: '',
       cost_price: '',
@@ -90,8 +127,11 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
       warranty_duration: '',
       warranty_unit: 'months'
     });
-    setNewCategory('');
-    setShowNewCategory(false);
+    setPhoneSpecs({
+      storage: '',
+      color: ''
+    });
+    setImeiNumbers(['']);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,37 +156,50 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     setLoading(true);
     
     try {
-      // Handle category creation
-      if (showNewCategory && newCategory.trim()) {
-        try {
-          const result = await createCategory(newCategory.trim(), newCategory.trim());
-          if (result && result.success) {
-            setFormData(prev => ({ ...prev, category: result.data.name }));
-          }
-        } catch (error) {
-          console.error('Error creating category:', error);
-        }
-      }
+      const specifications = {
+        ...formData.specifications,
+        storage: phoneSpecs.storage,
+        color: phoneSpecs.color
+      };
+      
+      // Generate SKU for phones
+      const sku = `${formData.brand.substring(0, 3).toUpperCase()}-${formData.name.replace(/\s+/g, '').substring(0, 8).toUpperCase()}`;
       
       const itemData = {
         ...formData,
+        sku,
         price: parseFloat(formData.price) || 0,
         cost_price: parseFloat(formData.cost_price) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         min_stock_level: parseInt(formData.min_stock_level) || 0,
         warranty_duration: parseInt(formData.warranty_duration) || 0,
+        specifications
       };
       
       const result = await onSave(itemData);
       
       if (result && result.success) {
+        // If this is a new phone and we have IMEI numbers, save them
+        if (!item && result.data) {
+          const inventoryItemId = result.data.id;
+          for (const imei of imeiNumbers) {
+            if (imei.trim()) {
+              try {
+                await createPhoneIMEI(inventoryItemId, imei.trim());
+              } catch (error) {
+                console.error('Error creating IMEI:', error);
+              }
+            }
+          }
+        }
+        
         onClose();
       } else {
-        throw new Error(result?.error || 'Failed to save item');
+        throw new Error(result?.error || 'Failed to save phone');
       }
     } catch (error) {
-      console.error('Failed to save item:', error);
-      alert('Failed to save item. Please try again.');
+      console.error('Failed to save phone:', error);
+      alert('Failed to save phone. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -165,6 +218,38 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
       setFormData(prev => ({
         ...prev,
         [name]: value
+      }));
+    }
+  };
+
+  const handlePhoneSpecChange = (field: string, value: string) => {
+    setPhoneSpecs(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleIMEIChange = (index: number, value: string) => {
+    const newIMEIs = [...imeiNumbers];
+    newIMEIs[index] = value;
+    setImeiNumbers(newIMEIs);
+  };
+
+  const addIMEIField = () => {
+    setImeiNumbers(prev => [...prev, '']);
+    setFormData(prev => ({
+      ...prev,
+      stock_quantity: (parseInt(prev.stock_quantity) + 1).toString()
+    }));
+  };
+
+  const removeIMEIField = (index: number) => {
+    if (imeiNumbers.length > 1) {
+      const newIMEIs = imeiNumbers.filter((_, i) => i !== index);
+      setImeiNumbers(newIMEIs);
+      setFormData(prev => ({
+        ...prev,
+        stock_quantity: Math.max(0, parseInt(prev.stock_quantity) - 1).toString()
       }));
     }
   };
@@ -196,7 +281,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Name *
+                Phone Name *
               </label>
               <input
                 type="text"
@@ -205,7 +290,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Product Name"
+                placeholder="iPhone 15 Pro"
               />
             </div>
             
@@ -220,7 +305,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Brand Name"
+                placeholder="Apple"
               />
             </div>
             
@@ -228,59 +313,24 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category *
               </label>
-              <div className="space-y-2">
-                <select
-                  name="category"
-                  value={showNewCategory ? 'new' : formData.category}
-                  onChange={(e) => {
-                    if (e.target.value === 'new') {
-                      setShowNewCategory(true);
-                    } else {
-                      setShowNewCategory(false);
-                      setFormData(prev => ({ ...prev, category: e.target.value }));
-                    }
-                  }}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {productCategories.map(cat => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.display_name}
-                    </option>
-                  ))}
-                  <option value="new">+ Add New Category</option>
-                </select>
-                
-                {showNewCategory && (
-                  <input
-                    type="text"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="Enter new category name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                SKU *
-              </label>
-              <input
-                type="text"
-                name="sku"
-                value={formData.sku}
+              <select
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Product SKU"
-              />
+              >
+                {phoneCategories.map(cat => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (₹) *
+                Selling Price (₹) *
               </label>
               <input
                 type="number"
@@ -296,7 +346,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price (₹) *
+                Buying Price (₹) *
               </label>
               <input
                 type="number"
@@ -312,7 +362,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Stock Quantity *
+                Quantity *
               </label>
               <input
                 type="number"
@@ -327,7 +377,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Min Stock Level *
+                Min Quantity *
               </label>
               <input
                 type="number"
@@ -359,9 +409,49 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             </div>
           </div>
 
+          {/* Phone Specifications */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Specifications</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Storage *
+                </label>
+                <select
+                  value={phoneSpecs.storage}
+                  onChange={(e) => handlePhoneSpecChange('storage', e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Storage</option>
+                  {storageOptions.map(storage => (
+                    <option key={storage} value={storage}>{storage}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Color *
+                </label>
+                <select
+                  value={phoneSpecs.color}
+                  onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Color</option>
+                  {phoneColors.map(color => (
+                    <option key={color} value={color}>{color}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Image Upload Section */}
           <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Product Image</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Phone Image</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -408,7 +498,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               <div className="mt-4">
                 <img
                   src={formData.image_base64 || formData.image_url}
-                  alt="Product preview"
+                  alt="Phone preview"
                   className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                 />
               </div>
@@ -485,6 +575,80 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               )}
             </div>
           </div>
+
+          {/* IMEI Numbers Section */}
+          {!item && (
+            <div className="border-t pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-md font-medium text-gray-900">IMEI Numbers</h4>
+                <button
+                  type="button"
+                  onClick={addIMEIField}
+                  className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add IMEI
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {imeiNumbers.map((imei, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={imei}
+                        onChange={(e) => handleIMEIChange(index, e.target.value)}
+                        placeholder={`IMEI ${index + 1}`}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    {imeiNumbers.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeIMEIField(index)}
+                        className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Show existing IMEIs for editing */}
+          {item && phoneIMEIs.length > 0 && (
+            <div className="border-t pt-6">
+              <h4 className="text-md font-medium text-gray-900 mb-4">Existing IMEI Numbers</h4>
+              <div className="space-y-2">
+                {phoneIMEIs.map((imeiData) => (
+                  <div key={imeiData.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="font-mono text-sm">{imeiData.imei_number}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        imeiData.is_sold 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {imeiData.is_sold ? 'Sold' : 'Available'}
+                      </span>
+                      {!imeiData.is_sold && (
+                        <button
+                          type="button"
+                          onClick={() => deletePhoneIMEI(imeiData.id)}
+                          className="p-1 text-red-600 hover:text-red-700 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -496,7 +660,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter product description..."
+              placeholder="Enter phone description..."
             />
           </div>
           
@@ -518,7 +682,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              {loading ? 'Saving...' : 'Save Product'}
+              {loading ? 'Saving...' : 'Save Phone'}
             </button>
           </div>
         </form>

@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Search, Edit, Trash2, AlertTriangle, Smartphone } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
-import { InventoryModal } from '../components/InventoryModal';
+import { PhoneModal } from '../components/PhoneModal';
 import { InventoryItem } from '../lib/supabase';
 
-export function Inventory() {
+export function Phones() {
   const { items, loading, addItem, updateItem, deleteItem } = useInventory();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Filter out phones from regular inventory
-  const products = items.filter(item => 
-    item.category !== 'phones' && 
-    item.category !== 'featured_phones' && 
-    item.category !== 'button_phones'
+  // Filter only phones
+  const phones = items.filter(item => 
+    item.category === 'phones' || 
+    item.category === 'featured_phones' || 
+    item.category === 'button_phones'
   );
 
-  const filteredItems = products.filter(item => {
+  const filteredPhones = phones.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -26,30 +26,30 @@ export function Inventory() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleAddItem = () => {
+  const handleAddPhone = () => {
     setEditingItem(null);
     setIsModalOpen(true);
   };
 
-  const handleEditItem = (item: InventoryItem) => {
+  const handleEditPhone = (item: InventoryItem) => {
     setEditingItem(item);
     setIsModalOpen(true);
   };
 
-  const handleDeleteItem = async (item: InventoryItem) => {
+  const handleDeletePhone = async (item: InventoryItem) => {
     if (window.confirm(`Are you sure you want to delete "${item.name}"?`)) {
       const result = await deleteItem(item.id);
       if (!result.success) {
-        alert(result.error || 'Failed to delete item');
+        alert(result.error || 'Failed to delete phone');
       }
     }
   };
 
-  const handleSaveItem = async (itemData: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleSavePhone = async (phoneData: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>) => {
     if (editingItem) {
-      return await updateItem(editingItem.id, itemData);
+      return await updateItem(editingItem.id, phoneData);
     } else {
-      return await addItem(itemData);
+      return await addItem(phoneData);
     }
   };
 
@@ -79,15 +79,15 @@ export function Inventory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Package className="w-8 h-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Product Inventory</h1>
+          <Smartphone className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Phone Inventory</h1>
         </div>
         <button
-          onClick={handleAddItem}
+          onClick={handleAddPhone}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Product
+          Add Phone
         </button>
       </div>
 
@@ -98,7 +98,7 @@ export function Inventory() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search phones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -122,10 +122,13 @@ export function Inventory() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Product
+                  Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Specifications
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
@@ -142,44 +145,55 @@ export function Inventory() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredItems.map((item) => {
-                const stockStatus = getStockStatus(item);
+              {filteredPhones.map((phone) => {
+                const stockStatus = getStockStatus(phone);
                 return (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={phone.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
-                          {item.image_base64 || item.image_url ? (
+                          {phone.image_base64 || phone.image_url ? (
                             <img
                               className="h-12 w-12 rounded-lg object-cover"
-                              src={item.image_base64 || item.image_url}
-                              alt={item.name}
+                              src={phone.image_base64 || phone.image_url}
+                              alt={phone.name}
                             />
                           ) : (
                             <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                              <Package className="w-6 h-6 text-gray-400" />
+                              <Smartphone className="w-6 h-6 text-gray-400" />
                             </div>
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          <div className="text-sm text-gray-500">{item.brand}</div>
-                          <div className="text-xs text-gray-400">{item.sku}</div>
+                          <div className="text-sm font-medium text-gray-900">{phone.name}</div>
+                          <div className="text-sm text-gray-500">{phone.brand}</div>
+                          <div className="text-xs text-gray-400">{phone.sku}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {phone.category === 'featured_phones' ? 'Featured Phone' : 
+                         phone.category === 'button_phones' ? 'Button Phone' : 'Phone'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">₹{item.price.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">Cost: ₹{item.cost_price.toLocaleString()}</div>
+                      <div className="text-sm text-gray-900">
+                        {phone.specifications?.storage && (
+                          <div>Storage: {phone.specifications.storage}</div>
+                        )}
+                        {phone.specifications?.color && (
+                          <div>Color: {phone.specifications.color}</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">₹{phone.price.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">Cost: ₹{phone.cost_price.toLocaleString()}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900">{item.stock_quantity}</span>
+                        <span className="text-sm font-medium text-gray-900">{phone.stock_quantity}</span>
                         {stockStatus === 'low-stock' && (
                           <AlertTriangle className="w-4 h-4 text-yellow-500 ml-1" />
                         )}
@@ -194,23 +208,23 @@ export function Inventory() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        item.status === 'active' ? 'bg-green-100 text-green-800' :
-                        item.status === 'discontinued' ? 'bg-gray-100 text-gray-800' :
+                        phone.status === 'active' ? 'bg-green-100 text-green-800' :
+                        phone.status === 'discontinued' ? 'bg-gray-100 text-gray-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('_', ' ')}
+                        {phone.status.charAt(0).toUpperCase() + phone.status.slice(1).replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleEditItem(item)}
+                          onClick={() => handleEditPhone(phone)}
                           className="text-blue-600 hover:text-blue-900 transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteItem(item)}
+                          onClick={() => handleDeletePhone(phone)}
                           className="text-red-600 hover:text-red-900 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -224,26 +238,26 @@ export function Inventory() {
           </table>
         </div>
 
-        {filteredItems.length === 0 && (
+        {filteredPhones.length === 0 && (
           <div className="text-center py-12">
-            <Package className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+            <Smartphone className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No phones found</h3>
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm || statusFilter !== 'all' 
                 ? 'Try adjusting your search or filter criteria.'
-                : 'Get started by adding your first product to inventory.'
+                : 'Get started by adding your first phone to inventory.'
               }
             </p>
           </div>
         )}
       </div>
 
-      <InventoryModal
+      <PhoneModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveItem}
+        onSave={handleSavePhone}
         item={editingItem}
-        title={editingItem ? 'Edit Product' : 'Add New Product'}
+        title={editingItem ? 'Edit Phone' : 'Add New Phone'}
       />
     </div>
   );

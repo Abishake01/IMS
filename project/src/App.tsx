@@ -1,75 +1,57 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LoginForm } from './components/LoginForm';
+import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
+import { Phones } from './pages/Phones';
 import { Billing } from './pages/Billing';
-import { Reports } from './pages/Reports';
+import { PhoneBilling } from './pages/PhoneBilling';
 import { Sales } from './pages/Sales';
+import { Reports } from './pages/Reports';
 import { Service } from './pages/Service';
-import { ServiceReport } from './pages/ServiceReport';
 import { AdminService } from './pages/AdminService';
-
-function AppContent() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginForm />;
-  }
-
-  return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <Routes>
-            {user.role === 'admin' ? (
-              <>
-                <Route path="/" element={<Dashboard onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/inventory" element={<Inventory onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/sales" element={<Sales onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/reports" element={<Reports onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/admin-service" element={<AdminService onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/billing" element={<Navigate to="/" replace />} />
-                <Route path="/service" element={<Navigate to="/" replace />} />
-                <Route path="/service-report" element={<Navigate to="/" replace />} />
-              </>
-            ) : (
-              <>
-                <Route path="/billing" element={<Billing onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/service" element={<Service onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="/service-report" element={<ServiceReport onMenuClick={() => setSidebarOpen(true)} />} />
-                <Route path="*" element={<Navigate to="/billing" replace />} />
-              </>
-            )}
-          </Routes>
-        </main>
-      </div>
-    </div>
-  );
-}
+import { ServiceReport } from './pages/ServiceReport';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'inventory':
+        return <Inventory />;
+      case 'phones':
+        return <Phones />;
+      case 'billing':
+        return <Billing />;
+      case 'phone-billing':
+        return <PhoneBilling />;
+      case 'sales':
+        return <Sales />;
+      case 'reports':
+        return <Reports />;
+      case 'service':
+        return <Service />;
+      case 'admin-service':
+        return <AdminService />;
+      case 'service-report':
+        return <ServiceReport />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+        <main className="flex-1 ml-64 overflow-auto">
+          <div className="p-8">
+            {renderPage()}
+          </div>
+        </main>
+      </div>
     </AuthProvider>
   );
 }
