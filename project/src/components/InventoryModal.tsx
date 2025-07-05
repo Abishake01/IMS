@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Package, Upload } from 'lucide-react';
+import { X, Save, Upload } from 'lucide-react';
 import { InventoryItem, convertImageToBase64 } from '../lib/supabase';
 import { useCategories } from '../hooks/useCategories';
 
@@ -42,8 +42,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
   // Filter out phone categories for regular products
   const productCategories = categories.filter(cat => 
     cat.name !== 'phones' && 
-    cat.name !== 'featured_phones' && 
-    cat.name !== 'button_phones'
+    cat.name !== 'featured_phones' 
   );
 
   useEffect(() => {
@@ -177,6 +176,37 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
     }));
   };
 
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === 'new') {
+      setShowNewCategory(true);
+      setFormData(prev => ({ ...prev, category: '' }));
+    } else {
+      setShowNewCategory(false);
+      setFormData(prev => ({ ...prev, category: e.target.value }));
+    }
+  };
+
+  const handleNewCategorySubmit = async () => {
+    if (!newCategory.trim()) {
+      alert('Please enter a category name');
+      return;
+    }
+
+    try {
+      const result = await createCategory(newCategory.trim(), newCategory.trim());
+      if (result && result.success) {
+        setFormData(prev => ({ ...prev, category: result.data.name }));
+        setShowNewCategory(false);
+        setNewCategory('');
+      } else {
+        alert('Failed to create category. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Failed to create category. Please try again.');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -230,19 +260,14 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
               </label>
               <div className="space-y-2">
                 <select
-                  name="category"
                   value={showNewCategory ? 'new' : formData.category}
-                  onChange={(e) => {
-                    if (e.target.value === 'new') {
-                      setShowNewCategory(true);
-                    } else {
-                      setShowNewCategory(false);
-                      setFormData(prev => ({ ...prev, category: e.target.value }));
-                    }
-                  }}
+                  onChange={handleCategoryChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
+                  {productCategories.length === 0 && (
+                    <option value="">No categories available</option>
+                  )}
                   {productCategories.map(cat => (
                     <option key={cat.id} value={cat.name}>
                       {cat.display_name}
@@ -252,13 +277,33 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
                 </select>
                 
                 {showNewCategory && (
-                  <input
-                    type="text"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="Enter new category name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder="Enter new category name"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleNewCategorySubmit}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewCategory(false);
+                        setNewCategory('');
+                        setFormData(prev => ({ ...prev, category: productCategories[0]?.name || 'accessories' }));
+                      }}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -280,7 +325,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (₹) *
+                Selling Price (₹) *
               </label>
               <input
                 type="number"
@@ -296,7 +341,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price (₹) *
+                Buying Price (₹) *
               </label>
               <input
                 type="number"

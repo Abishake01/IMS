@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { InventoryModal } from '../components/InventoryModal';
@@ -14,8 +14,7 @@ export function Inventory() {
   // Filter out phones from regular inventory
   const products = items.filter(item => 
     item.category !== 'phones' && 
-    item.category !== 'featured_phones' && 
-    item.category !== 'button_phones'
+    item.category !== 'featured_phones' 
   );
 
   const filteredItems = products.filter(item => {

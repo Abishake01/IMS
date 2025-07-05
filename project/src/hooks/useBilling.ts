@@ -16,6 +16,8 @@ interface SaleData {
   customer_phone?: string;
   total_amount: number;
   discount_amount: number;
+  gst_amount?: number;
+  cgst_amount?: number;
   final_amount: number;
   payment_method: string;
   notes?: string;
@@ -34,7 +36,7 @@ export function useBilling() {
         return { success: true, data: { id: Date.now().toString() } };
       }
 
-      // Create the sale record
+      // Create the sale record (without GST columns since they don't exist in the database)
       const { data: sale, error: saleError } = await supabase
         .from('sales')
         .insert([{

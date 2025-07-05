@@ -13,7 +13,7 @@ interface PhoneModalProps {
 
 const phoneCategories = [
   { value: 'featured_phones', label: 'Featured Phone' },
-  { value: 'smart_phone', label: 'Smart Phone' }
+  { value: 'smart_phones', label: 'Smart Phone' }
 ];
 
 const statuses = ['active', 'discontinued', 'out_of_stock'];
@@ -159,12 +159,10 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
         color: phoneSpecs.color
       };
       
-      // Generate SKU for phones
-      const sku = `${formData.brand.substring(0, 3).toUpperCase()}-${formData.name.replace(/\s+/g, '').substring(0, 8).toUpperCase()}`;
       
       const itemData = {
         ...formData,
-        sku,
+        
         price: parseFloat(formData.price) || 0,
         cost_price: parseFloat(formData.cost_price) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,

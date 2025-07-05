@@ -15,7 +15,7 @@ export function Phones() {
   const phones = items.filter(item => 
     item.category === 'phones' || 
     item.category === 'featured_phones' || 
-    item.category === 'button_phones'
+    item.category === 'smart_phones'
   );
 
   const filteredPhones = phones.filter(item => {
