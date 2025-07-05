@@ -20,8 +20,9 @@ const statuses = ['active', 'discontinued', 'out_of_stock'];
 
 
 const storageOptions = [
-  '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
-  '4GB+64GB', '6GB+128GB', '8GB+128GB', '8GB+256GB', '12GB+256GB', '12GB+512GB'
+  '64GB', '128GB', '256GB', '512MB',
+  '4GB+64GB', '6GB+128GB', '8GB+128GB', 
+  '8GB+256GB','3GB+32GB','4GB+128GB', '12GB+256GB', '12GB+512GB'
 ];
 
 export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalProps) {
