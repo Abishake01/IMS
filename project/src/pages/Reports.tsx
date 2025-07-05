@@ -493,9 +493,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Material Cost
-                  </th>
+                 
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comments
                   </th>
@@ -525,9 +523,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ₹{item.amount.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{(item.material_cost || 0).toFixed(2)}
-                    </td>
+                     
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {item.comments || '-'}
                     </td>

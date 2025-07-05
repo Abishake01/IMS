@@ -28,9 +28,9 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [gst, setGst] = useState(9);
-  const [cgst, setCgst] = useState(9);
+  const [discount, setDiscount] = useState();
+  const [gst, setGst] = useState();
+  const [cgst, setCgst] = useState();
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
   const [availableIMEIs, setAvailableIMEIs] = useState<{[key: string]: any[]}>({});
@@ -39,7 +39,7 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
   const phones = items.filter(item => 
     (item.category === 'phones' || 
      item.category === 'featured_phones' || 
-     item.category === 'button_phones') &&
+     item.category === 'smart_phones') &&
     item.status === 'active' &&
     item.stock_quantity > 0
   );
@@ -109,7 +109,7 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
   };
 
   const subtotal = billItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const discountAmount = (subtotal * discount) / 100;
+  const discountAmount = discount;
   const gstAmount = ((subtotal - discountAmount) * gst) / 100;
   const cgstAmount = ((subtotal - discountAmount) * cgst) / 100;
   const total = subtotal - discountAmount + gstAmount + cgstAmount;
@@ -164,8 +164,8 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
       setCustomerName('');
       setCustomerPhone('');
       setDiscount(0);
-      setGst(9);
-      setCgst(9);
+      setGst(0);
+      setCgst(0);
       setPaymentMethod('cash');
       setShowBillPreview(false);
       setAvailableIMEIs({});
@@ -294,10 +294,11 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="tel"
-                  placeholder="Phone Number"
+                  placeholder="Phone Number *"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 />
               </div>
             </div>

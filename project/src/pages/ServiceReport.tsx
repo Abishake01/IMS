@@ -42,7 +42,7 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
 
   const exportServiceReport = () => {
     const csvContent = [
-      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Material Cost', 'Comments'],
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Comments'],
       ...filteredServices.map((service, index) => [
         index + 1,
         service.model_name,
@@ -51,7 +51,7 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
         service.phone_number,
         format(new Date(service.service_date || service.created_at), 'yyyy-MM-dd'),
         `₹${service.amount.toFixed(2)}`,
-        service.material_cost ? `₹${service.material_cost.toFixed(2)}` : '₹0.00',
+   
         service.comments || '-'
       ])
     ].map(row => row.join(',')).join('\n');
@@ -157,9 +157,7 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Material Cost
-                </th>
+                
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Comments
                 </th>
@@ -189,9 +187,7 @@ export function ServiceReport({ onMenuClick }: ServiceReportProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ₹{service.amount.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{(service.material_cost || 0).toFixed(2)}
-                  </td>
+                   
                   <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                     {service.comments || '-'}
                   </td>
