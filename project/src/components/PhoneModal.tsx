@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Smartphone, Upload, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Upload, Plus, Trash2 } from 'lucide-react';
 import { InventoryItem, convertImageToBase64 } from '../lib/supabase';
 import { usePhoneIMEI } from '../hooks/usePhoneIMEI';
 
@@ -13,7 +13,7 @@ interface PhoneModalProps {
 
 const phoneCategories = [
   { value: 'featured_phones', label: 'Featured Phone' },
-  { value: 'button_phones', label: 'Button Phone' }
+  { value: 'smart_phone', label: 'Smart Phone' }
 ];
 
 const statuses = ['active', 'discontinued', 'out_of_stock'];
