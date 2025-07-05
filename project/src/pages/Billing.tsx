@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Calculator, User, Phone, Menu, Eye, Filter, Smartphone } from 'lucide-react';
+import { Plus, Search, Trash2, Calculator, User, Phone, Menu, Eye, Filter } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { useBilling } from '../hooks/useBilling';
 import { useCategories } from '../hooks/useCategories';
-import { usePhoneIMEI } from '../hooks/usePhoneIMEI';
 import { InventoryItem, getImageSrc } from '../lib/supabase';
 import { BillPreviewModal } from '../components/BillPreviewModal';
 
@@ -13,7 +12,6 @@ interface BillItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  selectedIMEI?: string;
 }
 
 interface BillingProps {
@@ -23,7 +21,6 @@ interface BillingProps {
 export function Billing({ onMenuClick }: BillingProps) {
   const { items } = useInventory();
   const { categories } = useCategories();
-  const { getAvailableIMEIs } = usePhoneIMEI();
   const { createSale, loading } = useBilling();
   
   const [billItems, setBillItems] = useState<BillItem[]>([]);
@@ -34,18 +31,31 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
-  const [availableIMEIs, setAvailableIMEIs] = useState<{[key: string]: any[]}>({});
 
-  const filteredItems = items.filter(item => 
+  // Filter out phones from regular products
+  const products = items.filter(item => 
+    item.category !== 'phones' && 
+    item.category !== 'featured_phones' && 
+    item.category !== 'button_phones' &&
     item.status === 'active' && 
-    item.stock_quantity > 0 &&
+    item.stock_quantity > 0
+  );
+
+  const filteredItems = products.filter(item => 
     (selectedCategory === 'all' || item.category === selectedCategory) &&
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      item.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
      item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const addToBill = async (item: InventoryItem) => {
+  // Filter categories to exclude phone categories
+  const productCategories = categories.filter(cat => 
+    cat.name !== 'phones' && 
+    cat.name !== 'featured_phones' && 
+    cat.name !== 'button_phones'
+  );
+
+  const addToBill = (item: InventoryItem) => {
     const existingItem = billItems.find(billItem => billItem.id === item.id);
     
     if (existingItem) {
@@ -57,12 +67,6 @@ export function Billing({ onMenuClick }: BillingProps) {
         ));
       }
     } else {
-      // For phones, get available IMEIs
-      if (item.category === 'phones') {
-        const imeis = await getAvailableIMEIs(item.id);
-        setAvailableIMEIs(prev => ({ ...prev, [item.id]: imeis }));
-      }
-      
       setBillItems(prev => [...prev, {
         id: item.id,
         item,
@@ -86,14 +90,6 @@ export function Billing({ onMenuClick }: BillingProps) {
     ));
   };
 
-  const updateSelectedIMEI = (id: string, imei: string) => {
-    setBillItems(prev => prev.map(billItem =>
-      billItem.id === id
-        ? { ...billItem, selectedIMEI: imei }
-        : billItem
-    ));
-  };
-
   const removeFromBill = (id: string) => {
     setBillItems(prev => prev.filter(item => item.id !== id));
   };
@@ -113,16 +109,6 @@ export function Billing({ onMenuClick }: BillingProps) {
       return;
     }
 
-    // Check if all phones have selected IMEIs
-    const phonesWithoutIMEI = billItems.filter(item => 
-      item.item.category === 'phones' && !item.selectedIMEI
-    );
-
-    if (phonesWithoutIMEI.length > 0) {
-      alert('Please select IMEI numbers for all phones');
-      return;
-    }
-
     setShowBillPreview(true);
   };
 
@@ -137,7 +123,7 @@ export function Billing({ onMenuClick }: BillingProps) {
       items: billItems.map(billItem => ({
         inventory_item_id: billItem.item.id,
         item_name: billItem.item.name,
-        item_sku: billItem.selectedIMEI || billItem.item.sku,
+        item_sku: billItem.item.sku,
         quantity: billItem.quantity,
         unit_price: billItem.unitPrice,
         total_price: billItem.totalPrice
@@ -153,7 +139,6 @@ export function Billing({ onMenuClick }: BillingProps) {
       setDiscount(0);
       setPaymentMethod('cash');
       setShowBillPreview(false);
-      setAvailableIMEIs({});
       alert('Sale completed successfully!');
     } else {
       alert('Failed to create sale. Please try again.');
@@ -164,8 +149,8 @@ export function Billing({ onMenuClick }: BillingProps) {
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Billing System</h1>
-          <p className="text-gray-600">Create new sales and manage billing</p>
+          <h1 className="text-2xl font-bold text-gray-900">Product Billing System</h1>
+          <p className="text-gray-600">Create new product sales and manage billing</p>
         </div>
         <button
           onClick={onMenuClick}
@@ -202,7 +187,7 @@ export function Billing({ onMenuClick }: BillingProps) {
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Categories</option>
-                  {categories.map(category => (
+                  {productCategories.map(category => (
                     <option key={category.id} value={category.name}>
                       {category.display_name}
                     </option>
@@ -306,7 +291,6 @@ export function Billing({ onMenuClick }: BillingProps) {
             ) : (
               billItems.map(billItem => {
                 const imageSrc = getImageSrc(billItem.item);
-                const itemIMEIs = availableIMEIs[billItem.item.id] || [];
                 
                 return (
                   <div key={billItem.id} className="p-4 border-b border-gray-100">
@@ -325,29 +309,6 @@ export function Billing({ onMenuClick }: BillingProps) {
                           <p className="text-xs text-green-600">
                             {billItem.item.warranty_duration} {billItem.item.warranty_unit} warranty
                           </p>
-                        )}
-                        
-                        {/* IMEI Selection for Phones */}
-                        {billItem.item.category === 'phones' && itemIMEIs.length > 0 && (
-                          <div className="mt-2">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              <Smartphone className="w-3 h-3 inline mr-1" />
-                              Select IMEI:
-                            </label>
-                            <select
-                              value={billItem.selectedIMEI || ''}
-                              onChange={(e) => updateSelectedIMEI(billItem.id, e.target.value)}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              required
-                            >
-                              <option value="">Choose IMEI</option>
-                              {itemIMEIs.map(imei => (
-                                <option key={imei.id} value={imei.imei_number}>
-                                  {imei.imei_number}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
