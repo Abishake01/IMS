@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock users for demonstration
 const mockUsers = [
-  { id: '1', email: 'admin@mobileshop.com', password: 'admin123', role: 'admin' as const, name: 'Admin User' },
+  { id: '1', email: 'parthamobileshop@gmail.com', password: 'admin@123', role: 'admin' as const, name: 'Admin User' },
   { id: '2', email: 'user@mobileshop.com', password: 'user123', role: 'user' as const, name: 'Sales User' }
 ];
 

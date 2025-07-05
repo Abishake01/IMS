@@ -92,20 +92,6 @@ export function LoginForm() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-900 mb-2">Demo Credentials:</h3>
-          <div className="space-y-2 text-sm">
-            <div>
-              <p className="font-medium text-gray-700">Admin Access:</p>
-              <p className="text-gray-600">admin@mobileshop.com / admin123</p>
-            </div>
-            <div>
-              <p className="font-medium text-gray-700">User Access:</p>
-              <p className="text-gray-600">user@mobileshop.com / user123</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
