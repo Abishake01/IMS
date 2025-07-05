@@ -326,7 +326,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (₹) *
+                Selling Price (₹) *
               </label>
               <input
                 type="number"
@@ -342,7 +342,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price (₹) *
+                Buying Price (₹) *
               </label>
               <input
                 type="number"
