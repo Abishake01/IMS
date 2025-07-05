@@ -18,10 +18,6 @@ const phoneCategories = [
 
 const statuses = ['active', 'discontinued', 'out_of_stock'];
 
-const phoneColors = [
-  'Black', 'White', 'Silver', 'Gold', 'Rose Gold', 'Space Gray', 'Blue', 'Green', 
-  'Purple', 'Red', 'Yellow', 'Pink', 'Coral', 'Midnight', 'Starlight', 'Deep Purple'
-];
 
 const storageOptions = [
   '64GB', '128GB', '256GB', '512GB', '1TB', '2TB',
@@ -431,21 +427,18 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Color *
-                </label>
-                <select
-                  value={phoneSpecs.color}
-                  onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select Color</option>
-                  {phoneColors.map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
-                </select>
-              </div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Color *
+  </label>
+  <input
+    type="text"
+    value={phoneSpecs.color}
+    onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+    required
+    placeholder="Enter Color"
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  />
+</div>
             </div>
           </div>
 
