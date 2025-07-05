@@ -42,7 +42,8 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
   // Filter out phone categories for regular products
   const productCategories = categories.filter(cat => 
     cat.name !== 'phones' && 
-    cat.name !== 'featured_phones' 
+    cat.name !== 'featured_phones' && 
+    cat.name !== 'button_phones'
   );
 
   useEffect(() => {
@@ -325,7 +326,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selling Price (₹) *
+                Price (₹) *
               </label>
               <input
                 type="number"
@@ -341,7 +342,7 @@ export function InventoryModal({ isOpen, onClose, onSave, item, title }: Invento
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Buying Price (₹) *
+                Cost Price (₹) *
               </label>
               <input
                 type="number"

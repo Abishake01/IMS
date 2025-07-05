@@ -99,7 +99,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
 
   const exportUserServiceReport = () => {
     const csvContent = [
-      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Comments'],
+      ['S.No', 'Mobile Model', 'Problem', 'Customer Name', 'Phone Number', 'Service Date', 'Amount', 'Material Cost', 'Comments'],
       ...serviceDetails.map((item, index) => [
         index + 1,
         item.model_name,
@@ -437,10 +437,10 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {item.quantity}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.unit_price.toFixed(2)}
+                      ₹{item.unit_price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.total_price.toFixed(2)}
+                      ₹{item.total_price.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -493,7 +493,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
-                  
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Material Cost
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comments
                   </th>
@@ -518,12 +520,14 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {item.phone_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(item.service_date), 'MMM dd, yyyy')}
+                      {format(new Date(item.service_date || item.created_at), 'MMM dd, yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.amount.toFixed(2)}
+                      ₹{item.amount.toFixed(2)}
                     </td>
-                     
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₹{(item.material_cost || 0).toFixed(2)}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {item.comments || '-'}
                     </td>
@@ -611,10 +615,10 @@ export function Reports({ onMenuClick }: ReportsProps) {
                       {format(new Date(item.service_date || item.created_at), 'MMM dd, yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.amount.toFixed(2)}
+                      ₹{item.amount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.material_cost.toFixed(2)}
+                      ₹{item.material_cost.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

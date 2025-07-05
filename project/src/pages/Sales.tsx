@@ -4,19 +4,6 @@ import { useSales } from '../hooks/useSales';
 import { SaleDetailsModal } from '../components/SaleDetailsModal';
 import { format } from 'date-fns';
 
-interface Sale {
-  id: string;
-  customer_name: string;
-  customer_phone?: string;
-  created_at: string;
-  final_amount: number;
-  payment_method: string;
-  status: string;
-  total_amount: number;
-  discount_amount: number;
-  [key: string]: any; 
-}
-
 interface SalesProps {
   onMenuClick: () => void;
 }
@@ -24,7 +11,7 @@ interface SalesProps {
 export function Sales({ onMenuClick }: SalesProps) {
   const { sales, loading } = useSales();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [selectedSale, setSelectedSale] = useState(null);
   const [dateFilter, setDateFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 

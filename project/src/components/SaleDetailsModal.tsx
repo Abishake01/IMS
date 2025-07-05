@@ -95,7 +95,7 @@ export function SaleDetailsModal({ sale, isOpen, onClose }: SaleDetailsModalProp
   // Convert sale items to bill items format for printing
   const billItems = sale.sale_items?.map(item => ({
     id: item.id,
-    item: item.inventory_item as any, // Ensure this matches the InventoryItem type expected by BillItem
+    item: item.inventory_item as any, // Pass the full inventory_item object to match InventoryItem type
     quantity: item.quantity,
     unitPrice: item.unit_price,
     totalPrice: item.total_price,

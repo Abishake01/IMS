@@ -47,7 +47,7 @@ export function BillPreviewModal({
     window.print();
   };
 
- 
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -89,9 +89,9 @@ export function BillPreviewModal({
               </thead>
               <tbody>
                 {billItems.map((billItem) => {
-                  const isPhoneItem =  
+                  const isPhoneItem = billItem.item.category === 'phones' || 
                                     billItem.item.category === 'featured_phones' || 
-                                    billItem.item.category === 'smart_phones';
+                                    billItem.item.category === 'button_phones';
                   
                   return (
                     <tr key={billItem.id}>
@@ -99,7 +99,7 @@ export function BillPreviewModal({
                         <div>
                           <div className="font-medium">{billItem.item.name}</div>
                           <div className="text-sm text-gray-500">{billItem.item.brand}</div>
-                           
+                          <div className="text-sm text-gray-500">SKU: {billItem.item.sku}</div>
                           
                           {/* Only show phone-specific details for phone items */}
                           {isPhoneItem && billItem.item.specifications && (

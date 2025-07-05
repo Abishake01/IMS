@@ -1,3 +1,4 @@
+
 import { DivideIcon as LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {

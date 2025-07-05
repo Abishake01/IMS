@@ -28,9 +28,9 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [gst, setGst] = useState(0);
-  const [cgst, setCgst] = useState(0);
+  const [discount, setDiscount] = useState();
+  const [gst, setGst] = useState();
+  const [cgst, setCgst] = useState();
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
 
@@ -97,7 +97,7 @@ export function Billing({ onMenuClick }: BillingProps) {
   };
 
   const subtotal = billItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const discountAmount = discount
+  const discountAmount = discount;
   const gstAmount = ((subtotal - discountAmount) * gst) / 100;
   const cgstAmount = ((subtotal - discountAmount) * cgst) / 100;
   const total = subtotal - discountAmount + gstAmount + cgstAmount;
@@ -279,7 +279,7 @@ export function Billing({ onMenuClick }: BillingProps) {
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
-                  type="tel"
+                  type="tel" 
                   placeholder="Phone Number *"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}

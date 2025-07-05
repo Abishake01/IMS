@@ -13,7 +13,7 @@ export function Phones() {
 
   // Filter only phones
   const phones = items.filter(item => 
-    item.category === 'phones' || 
+    
     item.category === 'featured_phones' || 
     item.category === 'smart_phones'
   );

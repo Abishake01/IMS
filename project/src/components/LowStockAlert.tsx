@@ -1,3 +1,4 @@
+
 import { AlertTriangle, Package } from 'lucide-react';
 
 interface LowStockItem {

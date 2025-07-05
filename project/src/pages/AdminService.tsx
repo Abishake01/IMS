@@ -266,7 +266,7 @@ export function AdminService({ onMenuClick }: AdminServiceProps) {
                 ) : (
                   <Save className="w-5 h-5" />
                 )}
-                {loading ? 'Creating...' : 'Save'}
+                {loading ? 'Creating...' : 'Create Service Record'}
               </button>
             </div>
           </form>

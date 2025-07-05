@@ -14,7 +14,8 @@ export function Inventory() {
   // Filter out phones from regular inventory
   const products = items.filter(item => 
     item.category !== 'phones' && 
-    item.category !== 'featured_phones' 
+    item.category !== 'featured_phones' && 
+    item.category !== 'smart_phones'
   );
 
   const filteredItems = products.filter(item => {

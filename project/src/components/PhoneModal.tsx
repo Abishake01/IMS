@@ -18,16 +18,14 @@ const phoneCategories = [
 
 const statuses = ['active', 'discontinued', 'out_of_stock'];
 
-
 const storageOptions = [
-  '64GB', '128GB', '256GB', '512MB',
-  '4GB+64GB', '6GB+128GB', '8GB+128GB', 
-  '8GB+256GB','3GB+32GB','4GB+128GB', '12GB+256GB', '12GB+512GB'
+  '64GB', '128GB', '256GB', '512MB ', '3GB+32GB', '4GB+128GB',
+  '4GB+64GB', '6GB+128GB', '8GB+128GB', '8GB+256GB', '12GB+256GB', '12GB+512GB'
 ];
 
 export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalProps) {
   const { createPhoneIMEI, fetchPhoneIMEIs, phoneIMEIs, deletePhoneIMEI } = usePhoneIMEI();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -46,12 +44,12 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
     warranty_duration: '',
     warranty_unit: 'months' as const
   });
-  
+
   const [phoneSpecs, setPhoneSpecs] = useState({
     storage: '',
     color: ''
   });
-  
+
   const [imeiNumbers, setImeiNumbers] = useState<string[]>(['']);
   const [loading, setLoading] = useState(false);
 
@@ -75,14 +73,14 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
         warranty_duration: item.warranty_duration?.toString() || '',
         warranty_unit: item.warranty_unit || 'months'
       });
-      
+
       if (item.specifications) {
         setPhoneSpecs({
           storage: item.specifications.storage || '',
           color: item.specifications.color || ''
         });
       }
-      
+
       fetchPhoneIMEIs(item.id);
     } else {
       resetForm();
@@ -93,7 +91,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
     // Update IMEI numbers based on stock quantity
     const quantity = parseInt(formData.stock_quantity) || 0;
     const currentIMEIs = [...imeiNumbers];
-    
+
     if (quantity > currentIMEIs.length) {
       for (let i = currentIMEIs.length; i < quantity; i++) {
         currentIMEIs.push('');
@@ -101,7 +99,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
     } else if (quantity < currentIMEIs.length) {
       currentIMEIs.splice(quantity);
     }
-    
+
     setImeiNumbers(currentIMEIs);
   }, [formData.stock_quantity]);
 
@@ -151,18 +149,20 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const specifications = {
         ...formData.specifications,
         storage: phoneSpecs.storage,
         color: phoneSpecs.color
       };
-      
-      
+
+      // Generate SKU for phones
+      const sku = `${formData.brand.substring(0, 3).toUpperCase()}-${formData.name.replace(/\s+/g, '').substring(0, 8).toUpperCase()}`;
+
       const itemData = {
         ...formData,
-        
+        sku,
         price: parseFloat(formData.price) || 0,
         cost_price: parseFloat(formData.cost_price) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
@@ -170,9 +170,9 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
         warranty_duration: parseInt(formData.warranty_duration) || 0,
         specifications
       };
-      
+
       const result = await onSave(itemData);
-      
+
       if (result && result.success) {
         // If this is a new phone and we have IMEI numbers, save them
         if (!item && result.data) {
@@ -187,7 +187,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
             }
           }
         }
-        
+
         onClose();
       } else {
         throw new Error(result?.error || 'Failed to save phone');
@@ -202,7 +202,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({
@@ -271,7 +271,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
             <X className="w-6 h-6" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -288,7 +288,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="iPhone 15 Pro"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Brand *
@@ -303,7 +303,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="Apple"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category *
@@ -322,7 +322,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Selling Price (₹) *
@@ -338,7 +338,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="999.99"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Buying Price (₹) *
@@ -354,7 +354,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="850.00"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Quantity *
@@ -369,7 +369,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="15"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Min Quantity *
@@ -384,7 +384,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 placeholder="5"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Status
@@ -424,20 +424,20 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                   ))}
                 </select>
               </div>
-              
+
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Color *
-  </label>
-  <input
-    type="text"
-    value={phoneSpecs.color}
-    onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
-    required
-    placeholder="Enter Color"
-    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  />
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Color *
+                </label>
+                <input
+                  type="text"
+                  value={phoneSpecs.color}
+                  onChange={(e) => handlePhoneSpecChange('color', e.target.value)}
+                  required
+                  placeholder="Enter Color"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
 
@@ -469,7 +469,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Or Image URL
@@ -485,7 +485,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                 />
               </div>
             </div>
-            
+
             {(formData.image_base64 || formData.image_url) && (
               <div className="mt-4">
                 <img
@@ -582,7 +582,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                   Add IMEI
                 </button>
               </div>
-              
+
               <div className="space-y-3">
                 {imeiNumbers.map((imei, index) => (
                   <div key={index} className="flex items-center gap-3">
@@ -619,11 +619,10 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
                   <div key={imeiData.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <span className="font-mono text-sm">{imeiData.imei_number}</span>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        imeiData.is_sold 
-                          ? 'bg-red-100 text-red-800' 
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${imeiData.is_sold
+                          ? 'bg-red-100 text-red-800'
                           : 'bg-green-100 text-green-800'
-                      }`}>
+                        }`}>
                         {imeiData.is_sold ? 'Sold' : 'Available'}
                       </span>
                       {!imeiData.is_sold && (
@@ -641,7 +640,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
               </div>
             </div>
           )}
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
@@ -655,7 +654,7 @@ export function PhoneModal({ isOpen, onClose, onSave, item, title }: PhoneModalP
               placeholder="Enter phone description..."
             />
           </div>
-          
+
           <div className="flex gap-4 pt-4">
             <button
               type="button"

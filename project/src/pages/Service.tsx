@@ -14,7 +14,7 @@ export function Service({ onMenuClick }: ServiceProps) {
     customer_name: '',
     phone_number: '',
     amount: '',
-     
+    material_cost: '',
     comments: '',
     service_date: new Date().toISOString().split('T')[0] // Default to today
   });
@@ -37,8 +37,8 @@ export function Service({ onMenuClick }: ServiceProps) {
 
     const serviceData = {
       ...formData,
-      amount: parseFloat(formData.amount) || 0
-        
+      amount: parseFloat(formData.amount) || 0,
+      material_cost: parseFloat(formData.material_cost) || 0
     };
 
     const result = await createService(serviceData);
@@ -50,7 +50,7 @@ export function Service({ onMenuClick }: ServiceProps) {
         customer_name: '',
         phone_number: '',
         amount: '',
-         
+        material_cost: '',
         comments: '',
         service_date: new Date().toISOString().split('T')[0]
       });
@@ -170,7 +170,22 @@ export function Service({ onMenuClick }: ServiceProps) {
                 />
               </div>
 
-               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <DollarSign className="w-4 h-4 inline mr-2" />
+                  Material Cost (₹)
+                </label>
+                <input
+                  type="number"
+                  name="material_cost"
+                  value={formData.material_cost}
+                  onChange={handleChange}
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
             <div>
@@ -213,7 +228,7 @@ export function Service({ onMenuClick }: ServiceProps) {
                   customer_name: '',
                   phone_number: '',
                   amount: '',
-                   
+                  material_cost: '',
                   comments: '',
                   service_date: new Date().toISOString().split('T')[0]
                 })}
@@ -231,7 +246,7 @@ export function Service({ onMenuClick }: ServiceProps) {
                 ) : (
                   <Save className="w-5 h-5" />
                 )}
-                {loading ? 'Creating...' : 'Save'}
+                {loading ? 'Creating...' : 'Create Service Request'}
               </button>
             </div>
           </form>
