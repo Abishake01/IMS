@@ -28,9 +28,9 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [discount, setDiscount] = useState();
-  const [gst, setGst] = useState();
-  const [cgst, setCgst] = useState();
+  const [discount, setDiscount] = useState(0);
+  const [gst, setGst] = useState(0);
+  const [cgst, setCgst] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Calendar, TrendingUp, Download, Menu, Package, Wrench } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, TrendingUp, Download, Filter } from 'lucide-react';
 import { useReports } from '../hooks/useReports';
 import { useAdminServices } from '../hooks/useAdminServices';
 import { SalesChart } from '../components/SalesChart';
@@ -7,11 +7,7 @@ import { TopProductsChart } from '../components/TopProductsChart';
 import { ReportCard } from '../components/ReportCard';
 import { format, subDays } from 'date-fns';
 
-interface ReportsProps {
-  onMenuClick: () => void;
-}
-
-export function Reports({ onMenuClick }: ReportsProps) {
+export function Reports() {
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'user-services' | 'admin-services'>('overview');
   const [dateRange, setDateRange] = useState(() => {
@@ -194,27 +190,19 @@ export function Reports({ onMenuClick }: ReportsProps) {
   }
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
           <p className="text-gray-600">Analyze your sales performance and service records</p>
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <button 
-            onClick={getExportFunction()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export {getExportLabel()}
-          </button>
-        </div>
+        <button 
+          onClick={getExportFunction()}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Export {getExportLabel()}
+        </button>
       </div>
 
       {/* Report Controls */}
@@ -398,7 +386,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-gray-400" />
+              <Filter className="w-5 h-5 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-900">Product Sales Details</h3>
             </div>
           </div>
@@ -450,7 +438,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
 
           {productDetails.length === 0 && (
             <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No product sales found</h3>
               <p className="text-gray-500">
                 No products were sold in the selected date range.
@@ -463,7 +451,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-gray-400" />
+              <Filter className="w-5 h-5 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-900">User Service Reports</h3>
             </div>
           </div>
@@ -493,7 +481,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
-                 
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Material Cost
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comments
                   </th>
@@ -523,7 +513,9 @@ export function Reports({ onMenuClick }: ReportsProps) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ₹{item.amount.toFixed(2)}
                     </td>
-                     
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₹{(item.material_cost || 0).toFixed(2)}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {item.comments || '-'}
                     </td>
@@ -535,7 +527,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
 
           {serviceDetails.length === 0 && (
             <div className="text-center py-12">
-              <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No user service records found</h3>
               <p className="text-gray-500">
                 No user service requests were created in the selected date range.
@@ -548,7 +540,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-gray-400" />
+              <Filter className="w-5 h-5 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-900">Admin Service Reports</h3>
             </div>
           </div>
@@ -637,7 +629,7 @@ export function Reports({ onMenuClick }: ReportsProps) {
 
           {adminServices.length === 0 && (
             <div className="text-center py-12">
-              <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No admin service records found</h3>
               <p className="text-gray-500">
                 No admin service records were created in the selected date range.

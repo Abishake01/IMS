@@ -1,45 +1,27 @@
-import React, { useState } from 'react';
-import { Sidebar } from './components/Sidebar';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LoginForm } from './components/LoginForm';
+import { AdminLayout } from './components/AdminLayout';
+import { UserLayout } from './components/UserLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
+// Admin Pages
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Phones } from './pages/Phones';
-import { Billing } from './pages/Billing';
-import { PhoneBilling } from './pages/PhoneBilling';
 import { Sales } from './pages/Sales';
 import { Reports } from './pages/Reports';
-import { Service } from './pages/Service';
 import { AdminService } from './pages/AdminService';
+
+// User Pages
+import { Billing } from './pages/Billing';
+import { PhoneBilling } from './pages/PhoneBilling';
+import { Service } from './pages/Service';
 import { ServiceReport } from './pages/ServiceReport';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LoginForm } from './components/LoginForm';
 
-// Helper functions moved outside component to prevent re-creation
-const isValidUserPage = (page: string) => {
-  const userPages = ['billing', 'phone-billing', 'service', 'service-report'];
-  return userPages.includes(page);
-};
-
-const isValidAdminPage = (page: string) => {
-  const adminPages = ['dashboard', 'inventory', 'phones', 'sales', 'reports', 'admin-service'];
-  return adminPages.includes(page);
-};
-
-function AppContent() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+function AppRoutes() {
   const { user, isLoading } = useAuth();
-
-  const isAdmin = user?.role === 'admin';
-
-  // Move useEffect to top level, before any conditional returns
-  React.useEffect(() => {
-    if (!user) return; // Don't set page if no user
-    
-    if (isAdmin && currentPage === 'dashboard') {
-      setCurrentPage('dashboard');
-    } else if (!isAdmin && (currentPage === 'dashboard' || !isValidUserPage(currentPage))) {
-      setCurrentPage('billing');
-    }
-  }, [user, isAdmin, currentPage]);
 
   if (isLoading) {
     return (
@@ -56,66 +38,63 @@ function AppContent() {
     return <LoginForm />;
   }
 
-  const renderPage = () => {
-    // Admin pages
-    if (isAdmin) {
-      if (!isValidAdminPage(currentPage)) {
-        return <Dashboard />;
-      }
-
-      switch (currentPage) {
-        case 'dashboard':
-          return <Dashboard />;
-        case 'inventory':
-          return <Inventory />;
-        case 'phones':
-          return <Phones />;
-        case 'sales':
-          return <Sales />;
-        case 'reports':
-          return <Reports />;
-        case 'admin-service':
-          return <AdminService />;
-        default:
-          return <Dashboard />;
-      }
-    }
-
-    // User pages
-    if (!isValidUserPage(currentPage)) {
-      return <Billing />;
-    }
-
-    switch (currentPage) {
-      case 'billing':
-        return <Billing />;
-      case 'phone-billing':
-        return <PhoneBilling />;
-      case 'service':
-        return <Service />;
-      case 'service-report':
-        return <ServiceReport />;
-      default:
-        return <Billing />;
-    }
-  };
-
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
-      <main className="flex-1 ml-64 overflow-auto">
-        <div className="p-8">
-          {renderPage()}
-        </div>
-      </main>
-    </div>
+    <Routes>
+      {/* Admin Routes */}
+      <Route path="/admin/*" element={
+        <ProtectedRoute requiredRole="admin">
+          <AdminLayout>
+            <Routes>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="inventory" element={<Inventory />} />
+              <Route path="phones" element={<Phones />} />
+              <Route path="sales" element={<Sales />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="admin-service" element={<AdminService />} />
+              <Route path="" element={<Navigate to="dashboard" replace />} />
+            </Routes>
+          </AdminLayout>
+        </ProtectedRoute>
+      } />
+
+      {/* User Routes */}
+      <Route path="/user/*" element={
+        <ProtectedRoute requiredRole="user">
+          <UserLayout>
+            <Routes>
+              <Route path="billing" element={<Billing />} />
+              <Route path="phone-billing" element={<PhoneBilling />} />
+              <Route path="service" element={<Service />} />
+              <Route path="service-report" element={<ServiceReport />} />
+              <Route path="" element={<Navigate to="billing" replace />} />
+            </Routes>
+          </UserLayout>
+        </ProtectedRoute>
+      } />
+
+      {/* Default redirects based on user role */}
+      <Route path="/" element={
+        user?.role === 'admin' 
+          ? <Navigate to="/admin/dashboard" replace />
+          : <Navigate to="/user/billing" replace />
+      } />
+      
+      {/* Catch all - redirect to appropriate dashboard */}
+      <Route path="*" element={
+        user?.role === 'admin' 
+          ? <Navigate to="/admin/dashboard" replace />
+          : <Navigate to="/user/billing" replace />
+      } />
+    </Routes>
   );
 }
 
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <AppRoutes />
+      </Router>
     </AuthProvider>
   );
 }

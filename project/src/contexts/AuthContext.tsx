@@ -30,7 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is already logged in
     const savedUser = localStorage.getItem('mobile_shop_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const userData = JSON.parse(savedUser);
+        // Validate the saved user data
+        if (userData && userData.id && userData.email && userData.role && userData.name) {
+          setUser(userData);
+        } else {
+          // Invalid saved data, clear it
+          localStorage.removeItem('mobile_shop_user');
+        }
+      } catch (error) {
+        // Invalid JSON, clear it
+        localStorage.removeItem('mobile_shop_user');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -56,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('mobile_shop_user');
+    // Force page reload to clear any cached state
+    window.location.href = '/';
   };
 
   return (
