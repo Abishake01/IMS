@@ -8,8 +8,8 @@ export default defineConfig({
   build:{
     outDir:"dist"
   },
-  server:{
-    historyApiFallback: true
+  server: {
+    // No historyApiFallback in Vite; use middleware or configure your framework/router for SPA fallback if needed
   },
   plugins: [react()],
   optimizeDeps: {
