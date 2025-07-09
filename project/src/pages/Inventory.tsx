@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useInventory } from '../hooks/useInventory';
 import { InventoryModal } from '../components/InventoryModal';
 import { InventoryItem } from '../lib/supabase';
@@ -10,8 +10,10 @@ export function Inventory() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Filter out phones from regular inventory
+  // Filter out phones from regular inventory - only show products
   const products = items.filter(item => 
     item.category !== 'phones' && 
     item.category !== 'featured_phones' && 
@@ -25,6 +27,17 @@ export function Inventory() {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredItems.slice(startIndex, endIndex);
+
+  // Reset to first page when search or filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const handleAddItem = () => {
     setEditingItem(null);
@@ -65,6 +78,10 @@ export function Inventory() {
       case 'low-stock': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-green-100 text-green-800';
     }
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   if (loading) {
@@ -142,7 +159,7 @@ export function Inventory() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredItems.map((item) => {
+              {currentItems.map((item) => {
                 const stockStatus = getStockStatus(item);
                 return (
                   <tr key={item.id} className="hover:bg-gray-50">
@@ -223,6 +240,48 @@ export function Inventory() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredItems.length)} of {filteredItems.length} results
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {filteredItems.length === 0 && (
           <div className="text-center py-12">

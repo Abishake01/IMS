@@ -33,6 +33,7 @@ export function Billing({ onMenuClick }: BillingProps) {
   const [cgst, setCgst] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
+  const [saleLoading, setSaleLoading] = useState(false);
 
   // Filter out phones from regular products
   const products = items.filter(item => 
@@ -117,6 +118,11 @@ export function Billing({ onMenuClick }: BillingProps) {
   };
 
   const handleConfirmSale = async () => {
+    setSaleLoading(true);
+    
+    // Add 2 second loading delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     const saleData = {
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -460,7 +466,7 @@ export function Billing({ onMenuClick }: BillingProps) {
         cgstAmount={cgstAmount}
         total={total}
         paymentMethod={paymentMethod}
-        loading={loading}
+        loading={saleLoading}
       />
     </div>
   );

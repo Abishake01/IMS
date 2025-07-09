@@ -33,6 +33,7 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
   const [cgst, setCgst] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showBillPreview, setShowBillPreview] = useState(false);
+  const [saleLoading, setSaleLoading] = useState(false);
   const [availableIMEIs, setAvailableIMEIs] = useState<{[key: string]: any[]}>({});
 
   // Filter only phones that are active and in stock
@@ -137,6 +138,11 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
   };
 
   const handleConfirmSale = async () => {
+    setSaleLoading(true);
+    
+    // Add 2 second loading delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     const saleData = {
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -493,7 +499,8 @@ export function PhoneBilling({ onMenuClick }: PhoneBillingProps) {
         cgstAmount={cgstAmount}
         total={total}
         paymentMethod={paymentMethod}
-        loading={loading}
+        loading={saleLoading}
+         
       />
     </div>
   );
